@@ -2,19 +2,41 @@
 
 A small line above the Claude Code prompt that shows how hard your Mac is working, refreshed every 3 seconds:
 
-```
-● This Mac · CPU 19 % ▁▂▅█▃ · GPU 48 % · RAM 39.7 GiB ▅▅▅▅▅ · 58 °C ▃▃▄▄▅ · load 34 % ▂▃▃▄▃ · swap 5.0 GiB
-```
+![The mac-sonde line in its three sparkline styles: bars, line and filled, coloured green, orange and red](docs/styles.svg)
 
 - **CPU**, **GPU**, **RAM** (counted like Activity Monitor: app memory, wired and compressed, without the cache), **temperature** (optional, see below), **load** (1-minute load average divided by the number of cores: 100 % means every core is busy, more means tasks are waiting) and **swap**.
-- Each value is followed by a sparkline of the last 10 readings (30 seconds), coloured green, orange or red as it rises.
-- The dot at the start sums it up: orange from 70 % or 85 °C, red from 90 % or 95 °C.
-- When the window is narrow, the sparklines shorten, then drop one by one (RAM first, then temperature, then load, CPU last), then the swap goes. The line is cut at the end, never wrapped.
+- Each value is followed by a sparkline, in a fixed-width font. Every character takes the colour of its highest reading: green below 70 %, orange from 70 %, red from 90 % (for the temperature: orange from 85 °C, red from 95 °C, height from 30 °C to 100 °C).
+- The dot at the start sums it up with the same thresholds.
+- The sparklines start empty at each new session.
 - `/mac` hides the line, and shows it again. The choice is remembered across sessions.
 
 **macOS only.** It reads the system with `sysctl`, `vm_stat`, `ioreg` and `ps`, which ship with macOS; nothing to install, no administrator rights, nothing sent anywhere. On another system the line shows "no reading".
 
 > Claude Code mods are in early access: the API may change and break this mod until it is updated.
+
+## Three sparkline styles
+
+| Style | Looks like | History shown |
+| --- | --- | --- |
+| `bars` (default) | `▁▃▅█`: one reading per character, 8 heights | 10 readings, 30 s |
+| `line` | `⣀⡠⠊`: the line alone, in braille dots, two readings per character, 4 heights | 20 readings, 1 min |
+| `filled` | `⣀⣤⣶⣿`: the same line with the area below filled | 20 readings, 1 min |
+
+Pick one when you install the mod (the **Sparkline style** setting), and switch at any time:
+
+```
+/mac bars
+/mac line
+/mac filled
+```
+
+The style you pick with `/mac` is remembered across sessions and wins over the install setting. `/mac` alone still hides or shows the line; an unknown word shows the help and changes nothing. The French names (`barres`, `courbe`, `pleine`) work too.
+
+## Narrow windows
+
+The line always stays on one row. Each sparkline is 10 characters at most. When space runs out, the sparklines shorten together down to 5 characters, then drop one by one: RAM first, then temperature, then load, the CPU last. Then the swap goes. Past that, the line is cut at the end, never wrapped.
+
+![The line at four widths: wide with every sparkline, medium without the RAM one, narrow with only the CPU one, very narrow cut at the end](docs/widths.svg)
 
 ## Install
 
@@ -41,6 +63,7 @@ Run `/config` and look for the mac-sonde rows:
 | Setting | Values | Default |
 | --- | --- | --- |
 | Language | `en` (English) or `fr` (français) | `en` |
+| Sparkline style | `bars`, `line` or `filled` | `bars` |
 | Temperature file | path to a file, `~/` allowed | empty: no temperature |
 
 ## Temperature (optional)

@@ -12,20 +12,28 @@ const CLE_MASQUE = 'masque'
 const TEXTES = {
   en: {
     nom: 'This Mac',
-    description: 'Show or hide the Mac CPU, GPU, RAM and temperature line',
+    description: 'Show or hide the Mac CPU, GPU, RAM and temperature line; bars, line or filled: sparkline style',
+    indice: '[bars|line|filled]',
     sansMesure: ': no reading · /mac to hide',
     masquee: 'This Mac line hidden. Type /mac to show it again.',
     affichee: 'This Mac line shown.',
+    style: (nom: string) => `Sparklines now in ${nom} style.`,
+    inconnu: (mot: string) => `Unknown style: "${mot}".`,
+    aide: 'Sparkline styles: /mac bars (▁▃▅█), /mac line (⣀⡠⠊), /mac filled (⣀⣤⣶⣿). /mac alone hides or shows the line.',
     charge: 'load',
     go: 'GiB',
     decimale: '.',
   },
   fr: {
     nom: 'Ce Mac',
-    description: 'Affiche ou masque la ligne CPU, GPU, RAM et température du Mac',
+    description: 'Affiche ou masque la ligne CPU, GPU, RAM et température du Mac ; barres, courbe ou pleine : style des graphes',
+    indice: '[barres|courbe|pleine]',
     sansMesure: ' : pas de mesure · /mac pour masquer',
     masquee: 'Ligne Ce Mac masquée. /mac pour la réafficher.',
     affichee: 'Ligne Ce Mac affichée.',
+    style: (nom: string) => `Graphes en style ${nom}.`,
+    inconnu: (mot: string) => `Style inconnu : « ${mot} ».`,
+    aide: 'Styles des graphes : /mac barres (▁▃▅█), /mac courbe (⣀⡠⠊), /mac pleine (⣀⣤⣶⣿). /mac seul masque ou affiche la ligne.',
     charge: 'charge',
     go: 'Gio',
     decimale: ',',
@@ -52,35 +60,83 @@ const historique = atom(
   { cpu: [], charge: [], ram: [], temp: [] },
   { shape: 'historique-2' },
 )
+const style = atom({ plugin: 'mac-sonde', key: 'style' } as const, 'barres')
 
-// Un mini-graphe derrière chaque valeur : 10 relevés (30 s) au plus, un caractère par relevé.
-// Faute de place, les graphes raccourcissent ensemble jusqu'à 5 points, puis partent un à un par priorité.
-const POINTS_MAX = 10
-const POINTS_REDUITS = 5
-const POINTS_MIN = 2
+// Un mini-graphe derrière chaque valeur, de 10 caractères au plus.
+// Faute de place, les graphes raccourcissent ensemble jusqu'à 5 caractères, puis partent un à un par priorité.
+const CARACTERES_MAX = 10
+const CARACTERES_REDUITS = 5
+const RELEVES_MIN = 2
 const PRIORITE = ['cpu', 'charge', 'temp', 'ram'] as const
 type Cle = (typeof PRIORITE)[number]
+
+// Trois styles, choisis à l'installation (option `graphe`) puis avec `/mac barres|courbe|pleine` :
+// - barres : ▁▂▃…█, un relevé par caractère, 8 hauteurs (10 relevés, 30 s) ;
+// - courbe : le trait en points braille, deux relevés par caractère, 4 hauteurs (20 relevés, 1 min) ;
+// - pleine : la même courbe, l'aire dessous remplie.
+const STYLES = ['barres', 'courbe', 'pleine'] as const
+type Style = (typeof STYLES)[number]
+const CLE_STYLE = 'graphe'
+const estStyle = (v: unknown): v is Style => STYLES.includes(v as Style)
+// Les noms anglais des styles, acceptés par /mac et par l'option d'installation quelle que soit la langue.
+const NOMS_EN: Record<Style, string> = { barres: 'bars', courbe: 'line', pleine: 'filled' }
+const versStyle = (mot: unknown): Style | null =>
+  estStyle(mot) ? mot : (STYLES.find(s => NOMS_EN[s] === mot) ?? null)
+const parCaractere = (style: Style) => (style === 'barres' ? 1 : 2)
+const RELEVES_MAX = CARACTERES_MAX * 2
+const garder = <T,>(serie: T[], valeur: T) => [...serie, valeur].slice(-RELEVES_MAX)
+
+// Part de la hauteur, de 0 à 1 : de 0 à 100 % ; la température de 30 °C à 100 °C.
+const part = (cle: Cle, v: number) => Math.min(1, Math.max(0, cle === 'temp' ? (v - 30) / 70 : v / 100))
 const BLOCS = '▁▂▃▄▅▆▇█'
-const garder = <T,>(serie: T[], valeur: T) => [...serie, valeur].slice(-POINTS_MAX)
-// Hauteur : de 0 à 100 % ; la température de 30 °C (▁) à 100 °C (█).
-const cran = (part: number) => BLOCS.charAt(Math.min(BLOCS.length - 1, Math.max(0, Math.floor(part * BLOCS.length))))
-const hauteur = (cle: Cle, v: number) => (cle === 'temp' ? cran((v - 30) / 70) : cran(v / 100))
+const bloc = (p: number) => BLOCS.charAt(Math.min(BLOCS.length - 1, Math.floor(p * BLOCS.length)))
+// Points braille d'un caractère, du bas vers le haut : colonne de gauche, puis de droite.
+const POINTS_GAUCHE = [0x40, 0x04, 0x02, 0x01]
+const POINTS_DROITE = [0x80, 0x20, 0x10, 0x08]
+const rang = (p: number) => Math.min(POINTS_GAUCHE.length - 1, Math.floor(p * POINTS_GAUCHE.length))
+
+// Les caractères d'une courbe : deux relevés chacun, le plus récent à droite ; un relevé manquant n'a pas de point.
+// `pleine` remplit du bas jusqu'au relevé ; `courbe` relie chaque relevé au précédent par un trait vertical.
+function courbe(valeurs: (number | null)[], versPart: (v: number) => number, pleine: boolean) {
+  const releves = valeurs.length % 2 ? [null, ...valeurs] : valeurs
+  const caracteres: { glyphe: string; releves: (number | null)[] }[] = []
+  let precedent: number | null = null
+  for (let i = 0; i < releves.length; i += 2) {
+    let code = 0x2800
+    const paire = [releves[i] ?? null, releves[i + 1] ?? null]
+    paire.forEach((v, colonne) => {
+      const points = colonne ? POINTS_DROITE : POINTS_GAUCHE
+      if (v === null) {
+        precedent = null
+        return
+      }
+      const r = rang(versPart(v))
+      const [bas, haut] = pleine ? [0, r] : [Math.min(precedent ?? r, r), Math.max(precedent ?? r, r)]
+      for (let y = bas; y <= haut; y++) code |= points[y] ?? 0
+      precedent = r
+    })
+    caracteres.push({ glyphe: String.fromCharCode(code), releves: paire })
+  }
+  return caracteres
+}
+
 // Couleur : les seuils de la pastille, de charge pour les taux, de chaleur pour la température.
 function couleur(cle: Cle, v: number) {
   const [orange, rouge] = cle === 'temp' ? [SEUIL_CHAUD, SEUIL_BRULANT] : [SEUIL_CHARGE, SEUIL_SATURE]
   return v >= rouge ? 'error' : v >= orange ? 'warning' : 'success'
 }
 
-// Combien de graphes, et de combien de points, tiennent dans la place restante : chacun prend une espace et ses points.
-function disposer(cles: readonly Cle[], releves: number, place: number) {
-  if (releves < POINTS_MIN) return { cles: [], points: 0 }
+// Combien de graphes, et de combien de caractères, tiennent dans la place restante : chacun prend une espace et
+// ses caractères ; un caractère porte `par` relevés.
+function disposer(cles: readonly Cle[], releves: number, par: number, place: number) {
+  if (releves < RELEVES_MIN) return { cles: [], caracteres: 0 }
   for (let nombre = cles.length; nombre > 0; nombre--) {
-    for (let longueur = POINTS_MAX; longueur >= POINTS_REDUITS; longueur--) {
-      const points = Math.min(longueur, releves)
-      if (nombre * (1 + points) <= place) return { cles: cles.slice(0, nombre), points }
+    for (let longueur = CARACTERES_MAX; longueur >= CARACTERES_REDUITS; longueur--) {
+      const caracteres = Math.min(longueur, Math.ceil(releves / par))
+      if (nombre * (1 + caracteres) <= place) return { cles: cles.slice(0, nombre), caracteres }
     }
   }
-  return { cles: [], points: 0 }
+  return { cles: [], caracteres: 0 }
 }
 
 const chiffre = (texte: string, motif: RegExp) => Number(texte.match(motif)?.[1] ?? NaN)
@@ -127,11 +183,14 @@ export const register: Register = (on, options) => {
   const t = options.language === 'fr' ? TEXTES.fr : TEXTES.en
   const NOM = t.nom
   const virgule = (n: number) => n.toFixed(1).replace('.', t.decimale)
+  const nomDuStyle = (s: Style) => (options.language === 'fr' ? s : NOMS_EN[s])
+  // Le style choisi à l'installation (option `sparkline` : bars, line ou filled).
+  const styleInstalle: Style = versStyle(options.sparkline) ?? 'barres'
   // La température est facultative : sans fichier réglé (option `temperatureFile`), elle n'est jamais lue.
   const fichierTemperature = typeof options.temperatureFile === 'string' ? options.temperatureFile.trim() : ''
 
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'mac', description: t.description })
+    await $.command.register({ name: 'mac', description: t.description, argumentHint: t.indice })
     const chemin = fichierTemperature.startsWith('~/')
       ? `${(await $.env.get('HOME')) ?? ''}${fichierTemperature.slice(1)}`
       : fichierTemperature
@@ -159,6 +218,9 @@ export const register: Register = (on, options) => {
     }
     const estMasque = (await $.store.get(CLE_MASQUE).catch(() => false)) === true
     await update($, masque, () => estMasque)
+    // Le style choisi par /mac passe avant celui de l'installation.
+    const styleRetenu = await $.store.get(CLE_STYLE).catch(() => null)
+    await update($, style, () => versStyle(styleRetenu) ?? styleInstalle)
     // Chaque session (et chaque rechargement du mod) repart d'un graphe vide : jamais de vieux points d'avant.
     await update($, historique, () => ({ cpu: [], charge: [], ram: [], temp: [] }))
     $.clock.every(PERIODE_MS, () => void relever())
@@ -167,7 +229,16 @@ export const register: Register = (on, options) => {
     return next(e)
   })
 
-  on('command.run', { command: 'mac' }, async $ => {
+  on('command.run', { command: 'mac' }, async ($, e) => {
+    const demande = e.args.trim().toLowerCase()
+    const voulu = versStyle(demande)
+    if (voulu) {
+      await update($, style, () => voulu)
+      await $.store.set(CLE_STYLE, voulu)
+      return { text: t.style(nomDuStyle(voulu)) }
+    }
+    if (demande) return { text: `${t.inconnu(demande)} ${t.aide}` }
+
     const estMasque = !(await read($, masque))
     await update($, masque, () => estMasque)
     await $.store.set(CLE_MASQUE, estMasque)
@@ -212,18 +283,31 @@ export const register: Register = (on, options) => {
     const tient = `${chiffres}${swap}`.length <= e.props.bodyColumns
     // Jamais `h` : c'est la fabrique des éléments JSX.
     const passe: Historique = await read($, historique)
+    const choisi: Style = await read($, style)
+    const par = parCaractere(choisi)
     const traces = PRIORITE.filter(cle => cle !== 'temp' || chaleur !== null)
-    const { cles, points } = tient
-      ? disposer(traces, passe.cpu.length, e.props.bodyColumns - `${chiffres}${swap}`.length)
-      : { cles: [], points: 0 }
+    const { cles, caracteres } = tient
+      ? disposer(traces, passe.cpu.length, par, e.props.bodyColumns - `${chiffres}${swap}`.length)
+      : { cles: [], caracteres: 0 }
+
+    // Un caractère coloré au pire de ses relevés ; sans relevé (température non lue), une espace, pour garder les
+    // graphes alignés dans le temps.
+    const teinte = (cle: Cle, releves: (number | null)[], glyphe: string) => {
+      const lus = releves.filter((v): v is number => v !== null)
+      return lus.length ? <Text color={couleur(cle, Math.max(...lus))}>{glyphe}</Text> : ' '
+    }
+    const caracteresDe = (cle: Cle) => {
+      const serie = passe[cle].slice(-caracteres * par)
+      if (choisi === 'barres') return serie.map(v => teinte(cle, [v], v === null ? ' ' : bloc(part(cle, v))))
+      return courbe(serie, v => part(cle, v), choisi === 'pleine').map(({ glyphe, releves }) => teinte(cle, releves, glyphe))
+    }
 
     // Les graphes en chasse fixe : le desktop compte la place en cellules à chasse fixe, mais écrit en proportionnelle.
-    // Une barre manquante (température non lue à ce relevé) reste une espace, pour garder les graphes alignés dans le temps.
     const graphe = (cle: Cle) =>
       cles.includes(cle) && (
         <Text mono>
           {' '}
-          {passe[cle].slice(-points).map(v => (v === null ? ' ' : <Text color={couleur(cle, v)}>{hauteur(cle, v)}</Text>))}
+          {caracteresDe(cle)}
         </Text>
       )
 

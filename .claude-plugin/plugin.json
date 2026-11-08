@@ -1,10 +1,18 @@
 {
   "name": "mac-sonde",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A line above the Claude Code prompt with your Mac's CPU, GPU, RAM, temperature, load and swap, each followed by a small colour sparkline (macOS only)",
-  "author": { "name": "Jeremy L" },
+  "author": {
+    "name": "Jeremy L"
+  },
   "license": "MIT",
-  "keywords": ["macos", "monitor", "cpu", "ram", "status"],
+  "keywords": [
+    "macos",
+    "monitor",
+    "cpu",
+    "ram",
+    "status"
+  ],
   "types": "./types/index.d.ts",
   "userConfig": {
     "language": {
@@ -12,7 +20,21 @@
       "title": "Language",
       "description": "Language of the line and of the /mac command: en (English) or fr (français).",
       "default": "en",
-      "options": ["en", "fr"]
+      "options": [
+        "en",
+        "fr"
+      ]
+    },
+    "sparkline": {
+      "type": "string",
+      "title": "Sparkline style",
+      "description": "bars ▁▃▅█ (30 s of history) · line ⣀⡠⠊ (1 min, the line alone) · filled ⣀⣤⣶⣿ (1 min, area filled). Change it later with /mac bars, /mac line or /mac filled.",
+      "default": "bars",
+      "options": [
+        "bars",
+        "line",
+        "filled"
+      ]
     },
     "temperatureFile": {
       "type": "string",

@@ -1,0 +1,390 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1123" height="215" viewBox="0 0 1123 215">
+<rect width="1123" height="215" rx="10" fill="#0d1117"/>
+<g font-family="SFMono-Regular,Menlo,Consolas,'DejaVu Sans Mono','Liberation Mono',monospace" font-size="14">
+<text x="20" y="36" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-size="12.5" fill="#8b949e">bars (default) · one reading per character, 8 heights, last 30 s · /mac bars</text>
+<text x="20.0" y="63" fill="#f85149" textLength="8.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">●</text>
+<text x="37.2" y="63" fill="#e6edf3" font-weight="600" textLength="68.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">This Mac</text>
+<text x="106.0" y="63" fill="#8b949e" textLength="94.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · CPU 95 %</text>
+<rect x="209.8" y="58.0" width="7.4" height="8.0" fill="#3fb950"/>
+<rect x="218.4" y="54.0" width="7.4" height="12.0" fill="#3fb950"/>
+<rect x="227.0" y="52.0" width="7.4" height="14.0" fill="#d29922"/>
+<rect x="235.6" y="56.0" width="7.4" height="10.0" fill="#3fb950"/>
+<rect x="244.2" y="56.0" width="7.4" height="10.0" fill="#3fb950"/>
+<rect x="252.8" y="52.0" width="7.4" height="14.0" fill="#d29922"/>
+<rect x="261.4" y="52.0" width="7.4" height="14.0" fill="#d29922"/>
+<rect x="270.0" y="50.0" width="7.4" height="16.0" fill="#f85149"/>
+<rect x="278.6" y="54.0" width="7.4" height="12.0" fill="#d29922"/>
+<rect x="287.2" y="50.0" width="7.4" height="16.0" fill="#f85149"/>
+<text x="295.2" y="63" fill="#8b949e" textLength="223.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · GPU 48 % · RAM 47.6 GiB</text>
+<rect x="528.0" y="54.0" width="7.4" height="12.0" fill="#3fb950"/>
+<rect x="536.6" y="54.0" width="7.4" height="12.0" fill="#3fb950"/>
+<rect x="545.2" y="54.0" width="7.4" height="12.0" fill="#3fb950"/>
+<rect x="553.8" y="54.0" width="7.4" height="12.0" fill="#3fb950"/>
+<rect x="562.4" y="54.0" width="7.4" height="12.0" fill="#3fb950"/>
+<rect x="571.0" y="54.0" width="7.4" height="12.0" fill="#3fb950"/>
+<rect x="579.6" y="54.0" width="7.4" height="12.0" fill="#d29922"/>
+<rect x="588.2" y="54.0" width="7.4" height="12.0" fill="#d29922"/>
+<rect x="596.8" y="54.0" width="7.4" height="12.0" fill="#d29922"/>
+<rect x="605.4" y="54.0" width="7.4" height="12.0" fill="#d29922"/>
+<text x="613.4" y="63" fill="#8b949e" textLength="68.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · 88 °C</text>
+<rect x="691.4" y="58.0" width="7.4" height="8.0" fill="#3fb950"/>
+<rect x="700.0" y="56.0" width="7.4" height="10.0" fill="#3fb950"/>
+<rect x="708.6" y="54.0" width="7.4" height="12.0" fill="#3fb950"/>
+<rect x="717.2" y="56.0" width="7.4" height="10.0" fill="#3fb950"/>
+<rect x="725.8" y="56.0" width="7.4" height="10.0" fill="#3fb950"/>
+<rect x="734.4" y="54.0" width="7.4" height="12.0" fill="#3fb950"/>
+<rect x="743.0" y="54.0" width="7.4" height="12.0" fill="#3fb950"/>
+<rect x="751.6" y="52.0" width="7.4" height="14.0" fill="#d29922"/>
+<rect x="760.2" y="52.0" width="7.4" height="14.0" fill="#3fb950"/>
+<rect x="768.8" y="52.0" width="7.4" height="14.0" fill="#d29922"/>
+<text x="776.8" y="63" fill="#8b949e" textLength="103.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · load 92 %</text>
+<rect x="889.2" y="58.0" width="7.4" height="8.0" fill="#3fb950"/>
+<rect x="897.8" y="56.0" width="7.4" height="10.0" fill="#3fb950"/>
+<rect x="906.4" y="56.0" width="7.4" height="10.0" fill="#3fb950"/>
+<rect x="915.0" y="54.0" width="7.4" height="12.0" fill="#3fb950"/>
+<rect x="923.6" y="56.0" width="7.4" height="10.0" fill="#3fb950"/>
+<rect x="932.2" y="54.0" width="7.4" height="12.0" fill="#d29922"/>
+<rect x="940.8" y="54.0" width="7.4" height="12.0" fill="#d29922"/>
+<rect x="949.4" y="52.0" width="7.4" height="14.0" fill="#d29922"/>
+<rect x="958.0" y="52.0" width="7.4" height="14.0" fill="#d29922"/>
+<rect x="966.6" y="50.0" width="7.4" height="16.0" fill="#f85149"/>
+<text x="974.6" y="63" fill="#8b949e" textLength="129.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · swap 5.0 GiB</text>
+<text x="20" y="97" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-size="12.5" fill="#8b949e">line · two readings per character, 4 heights, last minute · /mac line</text>
+<text x="20.0" y="124" fill="#f85149" textLength="8.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">●</text>
+<text x="37.2" y="124" fill="#e6edf3" font-weight="600" textLength="68.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">This Mac</text>
+<text x="106.0" y="124" fill="#8b949e" textLength="94.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · CPU 95 %</text>
+<circle cx="211.8" cy="125.0" r="1.35" fill="#3fb950"/>
+<circle cx="215.2" cy="125.0" r="1.35" fill="#3fb950"/>
+<circle cx="220.4" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="220.4" cy="125.0" r="1.35" fill="#3fb950"/>
+<circle cx="223.8" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="223.8" cy="125.0" r="1.35" fill="#3fb950"/>
+<circle cx="229.0" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="229.0" cy="125.0" r="1.35" fill="#3fb950"/>
+<circle cx="232.4" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="237.6" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="241.0" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="241.0" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="246.2" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="249.6" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="249.6" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="254.8" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="258.2" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="258.2" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="263.4" cy="113.0" r="1.35" fill="#d29922"/>
+<circle cx="263.4" cy="117.0" r="1.35" fill="#d29922"/>
+<circle cx="266.8" cy="113.0" r="1.35" fill="#d29922"/>
+<circle cx="266.8" cy="117.0" r="1.35" fill="#d29922"/>
+<circle cx="272.0" cy="117.0" r="1.35" fill="#d29922"/>
+<circle cx="275.4" cy="113.0" r="1.35" fill="#d29922"/>
+<circle cx="275.4" cy="117.0" r="1.35" fill="#d29922"/>
+<circle cx="280.6" cy="113.0" r="1.35" fill="#f85149"/>
+<circle cx="284.0" cy="113.0" r="1.35" fill="#f85149"/>
+<circle cx="289.2" cy="113.0" r="1.35" fill="#f85149"/>
+<circle cx="289.2" cy="117.0" r="1.35" fill="#f85149"/>
+<circle cx="292.6" cy="113.0" r="1.35" fill="#f85149"/>
+<circle cx="292.6" cy="117.0" r="1.35" fill="#f85149"/>
+<text x="295.2" y="124" fill="#8b949e" textLength="223.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · GPU 48 % · RAM 47.6 GiB</text>
+<circle cx="530.0" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="533.4" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="538.6" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="542.0" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="547.2" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="550.6" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="555.8" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="559.2" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="564.4" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="567.8" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="573.0" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="576.4" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="581.6" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="585.0" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="590.2" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="593.6" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="598.8" cy="117.0" r="1.35" fill="#d29922"/>
+<circle cx="602.2" cy="117.0" r="1.35" fill="#d29922"/>
+<circle cx="607.4" cy="117.0" r="1.35" fill="#d29922"/>
+<circle cx="610.8" cy="117.0" r="1.35" fill="#d29922"/>
+<text x="613.4" y="124" fill="#8b949e" textLength="68.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · 88 °C</text>
+<circle cx="693.4" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="696.8" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="702.0" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="705.4" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="710.6" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="714.0" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="719.2" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="722.6" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="722.6" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="727.8" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="731.2" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="736.4" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="736.4" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="739.8" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="739.8" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="745.0" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="748.4" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="753.6" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="757.0" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="762.2" cy="117.0" r="1.35" fill="#d29922"/>
+<circle cx="765.6" cy="113.0" r="1.35" fill="#d29922"/>
+<circle cx="765.6" cy="117.0" r="1.35" fill="#d29922"/>
+<circle cx="770.8" cy="113.0" r="1.35" fill="#d29922"/>
+<circle cx="774.2" cy="113.0" r="1.35" fill="#d29922"/>
+<text x="776.8" y="124" fill="#8b949e" textLength="103.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · load 92 %</text>
+<circle cx="891.2" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="894.6" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="899.8" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="903.2" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="908.4" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="911.8" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="917.0" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="920.4" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="925.6" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="925.6" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="929.0" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="934.2" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="934.2" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="937.6" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="937.6" cy="121.0" r="1.35" fill="#3fb950"/>
+<circle cx="942.8" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="946.2" cy="117.0" r="1.35" fill="#3fb950"/>
+<circle cx="951.4" cy="117.0" r="1.35" fill="#d29922"/>
+<circle cx="954.8" cy="117.0" r="1.35" fill="#d29922"/>
+<circle cx="960.0" cy="117.0" r="1.35" fill="#d29922"/>
+<circle cx="963.4" cy="113.0" r="1.35" fill="#d29922"/>
+<circle cx="963.4" cy="117.0" r="1.35" fill="#d29922"/>
+<circle cx="968.6" cy="113.0" r="1.35" fill="#f85149"/>
+<circle cx="972.0" cy="113.0" r="1.35" fill="#f85149"/>
+<text x="974.6" y="124" fill="#8b949e" textLength="129.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · swap 5.0 GiB</text>
+<text x="20" y="158" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif" font-size="12.5" fill="#8b949e">filled · the same curve with the area below filled · /mac filled</text>
+<text x="20.0" y="185" fill="#f85149" textLength="8.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve">●</text>
+<text x="37.2" y="185" fill="#e6edf3" font-weight="600" textLength="68.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve">This Mac</text>
+<text x="106.0" y="185" fill="#8b949e" textLength="94.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · CPU 95 %</text>
+<circle cx="211.8" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="215.2" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="220.4" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="220.4" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="223.8" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="229.0" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="229.0" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="232.4" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="232.4" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="237.6" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="237.6" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="241.0" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="241.0" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="241.0" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="246.2" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="246.2" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="246.2" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="249.6" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="249.6" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="254.8" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="254.8" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="258.2" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="258.2" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="258.2" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="263.4" cy="174.0" r="1.35" fill="#d29922"/>
+<circle cx="263.4" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="263.4" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="263.4" cy="186.0" r="1.35" fill="#d29922"/>
+<circle cx="266.8" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="266.8" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="266.8" cy="186.0" r="1.35" fill="#d29922"/>
+<circle cx="272.0" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="272.0" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="272.0" cy="186.0" r="1.35" fill="#d29922"/>
+<circle cx="275.4" cy="174.0" r="1.35" fill="#d29922"/>
+<circle cx="275.4" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="275.4" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="275.4" cy="186.0" r="1.35" fill="#d29922"/>
+<circle cx="280.6" cy="174.0" r="1.35" fill="#f85149"/>
+<circle cx="280.6" cy="178.0" r="1.35" fill="#f85149"/>
+<circle cx="280.6" cy="182.0" r="1.35" fill="#f85149"/>
+<circle cx="280.6" cy="186.0" r="1.35" fill="#f85149"/>
+<circle cx="284.0" cy="174.0" r="1.35" fill="#f85149"/>
+<circle cx="284.0" cy="178.0" r="1.35" fill="#f85149"/>
+<circle cx="284.0" cy="182.0" r="1.35" fill="#f85149"/>
+<circle cx="284.0" cy="186.0" r="1.35" fill="#f85149"/>
+<circle cx="289.2" cy="178.0" r="1.35" fill="#f85149"/>
+<circle cx="289.2" cy="182.0" r="1.35" fill="#f85149"/>
+<circle cx="289.2" cy="186.0" r="1.35" fill="#f85149"/>
+<circle cx="292.6" cy="174.0" r="1.35" fill="#f85149"/>
+<circle cx="292.6" cy="178.0" r="1.35" fill="#f85149"/>
+<circle cx="292.6" cy="182.0" r="1.35" fill="#f85149"/>
+<circle cx="292.6" cy="186.0" r="1.35" fill="#f85149"/>
+<text x="295.2" y="185" fill="#8b949e" textLength="223.6" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · GPU 48 % · RAM 47.6 GiB</text>
+<circle cx="530.0" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="530.0" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="530.0" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="533.4" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="533.4" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="533.4" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="538.6" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="538.6" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="538.6" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="542.0" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="542.0" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="542.0" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="547.2" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="547.2" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="547.2" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="550.6" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="550.6" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="550.6" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="555.8" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="555.8" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="555.8" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="559.2" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="559.2" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="559.2" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="564.4" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="564.4" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="564.4" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="567.8" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="567.8" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="567.8" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="573.0" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="573.0" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="573.0" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="576.4" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="576.4" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="576.4" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="581.6" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="581.6" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="581.6" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="585.0" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="585.0" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="585.0" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="590.2" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="590.2" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="590.2" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="593.6" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="593.6" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="593.6" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="598.8" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="598.8" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="598.8" cy="186.0" r="1.35" fill="#d29922"/>
+<circle cx="602.2" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="602.2" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="602.2" cy="186.0" r="1.35" fill="#d29922"/>
+<circle cx="607.4" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="607.4" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="607.4" cy="186.0" r="1.35" fill="#d29922"/>
+<circle cx="610.8" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="610.8" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="610.8" cy="186.0" r="1.35" fill="#d29922"/>
+<text x="613.4" y="185" fill="#8b949e" textLength="68.8" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · 88 °C</text>
+<circle cx="693.4" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="693.4" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="696.8" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="696.8" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="702.0" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="702.0" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="705.4" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="705.4" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="710.6" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="710.6" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="714.0" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="714.0" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="719.2" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="719.2" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="722.6" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="722.6" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="722.6" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="727.8" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="727.8" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="727.8" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="731.2" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="731.2" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="731.2" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="736.4" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="736.4" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="739.8" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="739.8" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="739.8" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="745.0" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="745.0" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="745.0" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="748.4" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="748.4" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="748.4" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="753.6" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="753.6" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="753.6" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="757.0" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="757.0" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="757.0" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="762.2" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="762.2" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="762.2" cy="186.0" r="1.35" fill="#d29922"/>
+<circle cx="765.6" cy="174.0" r="1.35" fill="#d29922"/>
+<circle cx="765.6" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="765.6" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="765.6" cy="186.0" r="1.35" fill="#d29922"/>
+<circle cx="770.8" cy="174.0" r="1.35" fill="#d29922"/>
+<circle cx="770.8" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="770.8" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="770.8" cy="186.0" r="1.35" fill="#d29922"/>
+<circle cx="774.2" cy="174.0" r="1.35" fill="#d29922"/>
+<circle cx="774.2" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="774.2" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="774.2" cy="186.0" r="1.35" fill="#d29922"/>
+<text x="776.8" y="185" fill="#8b949e" textLength="103.2" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · load 92 %</text>
+<circle cx="891.2" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="891.2" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="894.6" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="894.6" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="899.8" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="899.8" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="903.2" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="903.2" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="908.4" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="908.4" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="911.8" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="911.8" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="917.0" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="917.0" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="920.4" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="920.4" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="925.6" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="925.6" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="925.6" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="929.0" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="929.0" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="929.0" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="934.2" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="934.2" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="937.6" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="937.6" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="937.6" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="942.8" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="942.8" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="942.8" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="946.2" cy="178.0" r="1.35" fill="#3fb950"/>
+<circle cx="946.2" cy="182.0" r="1.35" fill="#3fb950"/>
+<circle cx="946.2" cy="186.0" r="1.35" fill="#3fb950"/>
+<circle cx="951.4" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="951.4" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="951.4" cy="186.0" r="1.35" fill="#d29922"/>
+<circle cx="954.8" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="954.8" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="954.8" cy="186.0" r="1.35" fill="#d29922"/>
+<circle cx="960.0" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="960.0" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="960.0" cy="186.0" r="1.35" fill="#d29922"/>
+<circle cx="963.4" cy="174.0" r="1.35" fill="#d29922"/>
+<circle cx="963.4" cy="178.0" r="1.35" fill="#d29922"/>
+<circle cx="963.4" cy="182.0" r="1.35" fill="#d29922"/>
+<circle cx="963.4" cy="186.0" r="1.35" fill="#d29922"/>
+<circle cx="968.6" cy="174.0" r="1.35" fill="#f85149"/>
+<circle cx="968.6" cy="178.0" r="1.35" fill="#f85149"/>
+<circle cx="968.6" cy="182.0" r="1.35" fill="#f85149"/>
+<circle cx="968.6" cy="186.0" r="1.35" fill="#f85149"/>
+<circle cx="972.0" cy="174.0" r="1.35" fill="#f85149"/>
+<circle cx="972.0" cy="178.0" r="1.35" fill="#f85149"/>
+<circle cx="972.0" cy="182.0" r="1.35" fill="#f85149"/>
+<circle cx="972.0" cy="186.0" r="1.35" fill="#f85149"/>
+<text x="974.6" y="185" fill="#8b949e" textLength="129.0" lengthAdjust="spacingAndGlyphs" xml:space="preserve"> · swap 5.0 GiB</text>
+</g>
+</svg>
