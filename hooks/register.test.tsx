@@ -61,6 +61,8 @@ function demarrage(on: any, relever: () => string | Error, estMasque = false, te
     return { value: temperature }
   })
   on('command.register', () => ({ value: { command: 'mac' } }))
+  // Ce que le moteur propose de lui-même pour le mot en cours : rien, ici.
+  on('prompt.autocomplete', () => ({ suggestions: [] }))
   on('session.start', (_: unknown, e: any) => ({ cwd: e.cwd }))
   on('clock.every', () => ({ value: undefined }))
   on('process.run', (_: unknown, e: any) => {
@@ -336,4 +338,39 @@ test('/mac answers in English by default', async ($, on) => {
   demarrage(on, () => SORTIE)
   await demarrer($)
   expect(await lancerMac($)).toMatchObject({ text: 'This Mac line hidden. Type /mac to show it again.' })
+})
+
+// Autocomplétion des mots après /mac : la zone de saisie demande des suggestions pour le mot en cours de frappe.
+const suggerer = ($: any, texte: string) => {
+  const start = texte.search(/\S+$/)
+  return $.prompt.autocomplete({ text: texte, cursor: texte.length, token: texte.slice(start), start })
+}
+const textes = (r: any) => r.suggestions.map((s: any) => s.text)
+
+test('after /mac, typing "s" suggests smooth and slow, each with a description', async ($, on) => {
+  demarrage(on, () => SORTIE)
+  await demarrer($)
+  const r = await suggerer($, '/mac s')
+  expect(textes(r)).toEqual(['smooth', 'slow'])
+  for (const s of r.suggestions) expect(s.description?.length).toBeGreaterThan(0)
+})
+
+test('after /mac, typing "f" suggests filled and fast', async ($, on) => {
+  demarrage(on, () => SORTIE)
+  await demarrer($)
+  expect(textes(await suggerer($, '/mac F'))).toEqual(['filled', 'fast'])
+})
+
+test('outside /mac, nothing is suggested', async ($, on) => {
+  demarrage(on, () => SORTIE)
+  await demarrer($)
+  expect(textes(await suggerer($, 'make it s'))).toEqual([])
+  expect(textes(await suggerer($, '/mac smooth s'))).toEqual([])
+  expect(textes(await suggerer($, '/machine s'))).toEqual([])
+})
+
+testFr('en français, /mac l propose lisse et lent', async ($, on) => {
+  demarrage(on, () => SORTIE)
+  await demarrer($)
+  expect(textes(await suggerer($, '/mac l'))).toEqual(['lisse', 'lent'])
 })

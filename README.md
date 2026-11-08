@@ -11,6 +11,7 @@ A small line above the Claude Code prompt that shows how hard your Mac is workin
 - The dot at the start sums it up with the same thresholds.
 - The sparklines start empty at each new session.
 - `/mac` hides the line, and shows it again. The choice is remembered across sessions.
+- After `/mac `, start a word and the prompt box suggests the ones it understands (`/mac s` → `smooth`, `slow`), each with a short description.
 
 **macOS only.** It reads the system with `sysctl`, `vm_stat`, `ioreg` and `ps`, which ship with macOS; nothing to install, no administrator rights, nothing sent anywhere. On another system the line shows "no reading".
 

@@ -23,6 +23,16 @@ const TEXTES = {
       'Sparkline styles: /mac smooth (continuous curve), /mac filled (⣀⣤⣶⣿), /mac line (⣀⡠⠊), /mac bars (▁▃▅█). ' +
       'Sampling rate: /mac slow (10 s), /mac normal (3 s), /mac fast (1 s). /mac alone hides or shows the line.',
     noms: { cpu: 'CPU', charge: 'load', temp: 'temperature', ram: 'RAM' },
+    // Les mots que /mac comprend, proposés pendant la frappe, chacun avec sa ligne d'explication.
+    mots: [
+      ['smooth', 'sparklines as a continuous curve'],
+      ['filled', 'sparklines as a filled curve of dots ⣀⣤⣶⣿'],
+      ['line', 'sparklines as a line of dots ⣀⡠⠊'],
+      ['bars', 'sparklines as bars ▁▃▅█'],
+      ['slow', 'one reading every 10 s'],
+      ['normal', 'one reading every 3 s'],
+      ['fast', 'one reading every second'],
+    ],
     alt: (nom: string, n: number) => `${nom}: curve of the last ${n} readings`,
     charge: 'load',
     go: 'GiB',
@@ -43,6 +53,15 @@ const TEXTES = {
       'Styles des graphes : /mac lisse (courbe continue), /mac pleine (⣀⣤⣶⣿), /mac courbe (⣀⡠⠊), /mac barres (▁▃▅█). ' +
       'Fréquence de relevé : /mac lent (10 s), /mac normal (3 s), /mac rapide (1 s). /mac seul masque ou affiche la ligne.',
     noms: { cpu: 'CPU', charge: 'charge', temp: 'température', ram: 'RAM' },
+    mots: [
+      ['lisse', 'graphes en courbe continue'],
+      ['pleine', 'graphes en courbe pleine, en points ⣀⣤⣶⣿'],
+      ['courbe', 'graphes en trait de points ⣀⡠⠊'],
+      ['barres', 'graphes en barres ▁▃▅█'],
+      ['lent', 'un relevé toutes les 10 s'],
+      ['normal', 'un relevé toutes les 3 s'],
+      ['rapide', 'un relevé chaque seconde'],
+    ],
     alt: (nom: string, n: number) => `${nom} : courbe des ${n} derniers relevés`,
     charge: 'charge',
     go: 'Gio',
@@ -314,6 +333,17 @@ export const register: Register = (on, options) => {
     await $.store.set(CLE_MASQUE, estMasque)
 
     return { text: estMasque ? t.masquee : t.affichee }
+  })
+
+  // Pendant la frappe de `/mac <mot>`, les mots que la commande comprend, à la suite de ce que proposent les autres.
+  on('prompt.autocomplete', async ($, e, next) => {
+    const avant = await next(e)
+    if (!/^\s*\/mac\s+$/.test(e.text.slice(0, e.start))) return avant
+    const debut = e.token.toLowerCase()
+    const miens = t.mots
+      .filter(([mot]) => mot.startsWith(debut))
+      .map(([mot, description]) => ({ text: mot, description }))
+    return { suggestions: [...avant.suggestions, ...miens] }
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
