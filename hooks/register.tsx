@@ -1,9 +1,8 @@
 import { atom, read, update } from 'claude-code'
-import type { Register, RenderChildren } from 'claude-code'
+import type { Register, RenderChildren, Timer } from 'claude-code'
 
 import type { Historique, Lecture } from '../types'
 
-const PERIODE_MS = 3000
 const PERIME_S = 60
 const OCTETS_PAR_GO = 1024 ** 3
 const MO_PAR_GO = 1024
@@ -12,33 +11,45 @@ const CLE_MASQUE = 'masque'
 const TEXTES = {
   en: {
     nom: 'This Mac',
-    description: 'Show or hide the Mac CPU, GPU, RAM and temperature line; bars, line or filled: sparkline style',
-    indice: '[bars|line|filled]',
+    description: 'Show or hide the Mac CPU, GPU, RAM and temperature line; smooth, filled, line, bars: sparkline style; slow, normal, fast: sampling rate',
+    indice: '[smooth|filled|line|bars|slow|normal|fast]',
     sansMesure: ': no reading · /mac to hide',
     masquee: 'This Mac line hidden. Type /mac to show it again.',
     affichee: 'This Mac line shown.',
     style: (nom: string) => `Sparklines now in ${nom} style.`,
-    inconnu: (mot: string) => `Unknown style: "${mot}".`,
-    aide: 'Sparkline styles: /mac bars (▁▃▅█), /mac line (⣀⡠⠊), /mac filled (⣀⣤⣶⣿). /mac alone hides or shows the line.',
+    frequence: (nom: string, s: number) => `Sampling ${nom}: one reading every ${s} s.`,
+    inconnu: (mot: string) => `Unknown setting: "${mot}".`,
+    aide:
+      'Sparkline styles: /mac smooth (continuous curve), /mac filled (⣀⣤⣶⣿), /mac line (⣀⡠⠊), /mac bars (▁▃▅█). ' +
+      'Sampling rate: /mac slow (10 s), /mac normal (3 s), /mac fast (1 s). /mac alone hides or shows the line.',
+    noms: { cpu: 'CPU', charge: 'load', temp: 'temperature', ram: 'RAM' },
+    alt: (nom: string, n: number) => `${nom}: curve of the last ${n} readings`,
     charge: 'load',
     go: 'GiB',
     decimale: '.',
   },
   fr: {
     nom: 'Ce Mac',
-    description: 'Affiche ou masque la ligne CPU, GPU, RAM et température du Mac ; barres, courbe ou pleine : style des graphes',
-    indice: '[barres|courbe|pleine]',
+    description:
+      'Affiche ou masque la ligne CPU, GPU, RAM et température du Mac ; lisse, pleine, courbe, barres : style des graphes ; lent, normal, rapide : fréquence',
+    indice: '[lisse|pleine|courbe|barres|lent|normal|rapide]',
     sansMesure: ' : pas de mesure · /mac pour masquer',
     masquee: 'Ligne Ce Mac masquée. /mac pour la réafficher.',
     affichee: 'Ligne Ce Mac affichée.',
     style: (nom: string) => `Graphes en style ${nom}.`,
-    inconnu: (mot: string) => `Style inconnu : « ${mot} ».`,
-    aide: 'Styles des graphes : /mac barres (▁▃▅█), /mac courbe (⣀⡠⠊), /mac pleine (⣀⣤⣶⣿). /mac seul masque ou affiche la ligne.',
+    frequence: (nom: string, s: number) => `Relevé ${nom} : un toutes les ${s} s.`,
+    inconnu: (mot: string) => `Réglage inconnu : « ${mot} ».`,
+    aide:
+      'Styles des graphes : /mac lisse (courbe continue), /mac pleine (⣀⣤⣶⣿), /mac courbe (⣀⡠⠊), /mac barres (▁▃▅█). ' +
+      'Fréquence de relevé : /mac lent (10 s), /mac normal (3 s), /mac rapide (1 s). /mac seul masque ou affiche la ligne.',
+    noms: { cpu: 'CPU', charge: 'charge', temp: 'température', ram: 'RAM' },
+    alt: (nom: string, n: number) => `${nom} : courbe des ${n} derniers relevés`,
     charge: 'charge',
     go: 'Gio',
     decimale: ',',
   },
 } as const
+type Textes = (typeof TEXTES)[keyof typeof TEXTES]
 const SEUIL_CHARGE = 70
 const SEUIL_SATURE = 90
 const SEUIL_CHAUD = 85
@@ -70,19 +81,61 @@ const RELEVES_MIN = 2
 const PRIORITE = ['cpu', 'charge', 'temp', 'ram'] as const
 type Cle = (typeof PRIORITE)[number]
 
-// Trois styles, choisis à l'installation (option `graphe`) puis avec `/mac barres|courbe|pleine` :
-// - barres : ▁▂▃…█, un relevé par caractère, 8 hauteurs (10 relevés, 30 s) ;
-// - courbe : le trait en points braille, deux relevés par caractère, 4 hauteurs (20 relevés, 1 min) ;
-// - pleine : la même courbe, l'aire dessous remplie.
-const STYLES = ['barres', 'courbe', 'pleine'] as const
+// Quatre styles, choisis à l'installation (option `graphe`) puis avec `/mac lisse|pleine|courbe|barres` :
+// - lisse (le défaut) : une vraie courbe continue, l'aire remplie, en image vectorielle ; deux relevés par case ;
+//   le terminal, qui ne dessine pas d'image, se replie sur `pleine` ;
+// - pleine : la courbe en points braille, l'aire dessous remplie, deux relevés par caractère, 4 hauteurs ;
+// - courbe : le trait seul, en points braille ;
+// - barres : ▁▂▃…█, un relevé par caractère, 8 hauteurs.
+const STYLES = ['lisse', 'pleine', 'courbe', 'barres'] as const
 type Style = (typeof STYLES)[number]
 const CLE_STYLE = 'graphe'
 const estStyle = (v: unknown): v is Style => STYLES.includes(v as Style)
-// Les noms anglais des styles, acceptés par /mac et par l'option d'installation quelle que soit la langue.
-const NOMS_EN: Record<Style, string> = { barres: 'bars', courbe: 'line', pleine: 'filled' }
+// Les noms anglais des styles et des fréquences, acceptés par /mac et par les options quelle que soit la langue.
+const STYLES_EN: Record<Style, string> = { lisse: 'smooth', pleine: 'filled', courbe: 'line', barres: 'bars' }
 const versStyle = (mot: unknown): Style | null =>
-  estStyle(mot) ? mot : (STYLES.find(s => NOMS_EN[s] === mot) ?? null)
+  estStyle(mot) ? mot : (STYLES.find(s => STYLES_EN[s] === mot) ?? null)
 const parCaractere = (style: Style) => (style === 'barres' ? 1 : 2)
+
+// Trois fréquences de relevé, choisies à l'installation (option `frequence`) puis avec `/mac lent|normal|rapide`.
+// Plus vite qu'une seconde, le relevé (cinq commandes système) pèserait sur le CPU qu'il mesure.
+const FREQUENCES = { lent: 10_000, normal: 3000, rapide: 1000 } as const
+type Frequence = keyof typeof FREQUENCES
+const CLE_FREQUENCE = 'frequence'
+const estFrequence = (v: unknown): v is Frequence => typeof v === 'string' && Object.hasOwn(FREQUENCES, v)
+const FREQUENCES_EN: Record<Frequence, string> = { lent: 'slow', normal: 'normal', rapide: 'fast' }
+const versFrequence = (mot: unknown): Frequence | null =>
+  estFrequence(mot) ? mot : ((Object.keys(FREQUENCES) as Frequence[]).find(f => FREQUENCES_EN[f] === mot) ?? null)
+
+// Une courbe lisse : sa case fait la largeur d'un caractère à chasse fixe, en pixels CSS ; ses couleurs sont écrites
+// en clair, une image ne lisant pas les couleurs du thème.
+const PX_PAR_CASE = 8
+const PX_HAUTEUR = 14
+const TEINTES = { success: '#3fa34d', warning: '#d9922e', error: '#d9534f' } as const
+
+// La courbe lisse d'une série : courbes de Bézier entre relevés, aire remplie dessous, dégradé de couleur
+// d'un relevé à l'autre selon son niveau. Les relevés manquants sont sautés.
+function courbeLisse(cle: Cle, valeurs: (number | null)[], cases: number, t: Textes) {
+  const lus = valeurs.filter((v): v is number => v !== null)
+  const largeur = cases * PX_PAR_CASE
+  const x = (i: number) => (lus.length > 1 ? (i * largeur) / (lus.length - 1) : largeur)
+  const y = (v: number) => PX_HAUTEUR - 1 - part(cle, v) * (PX_HAUTEUR - 2)
+  const arrondi = (n: number) => Math.round(n * 10) / 10
+  let trait = `M${arrondi(x(0))},${arrondi(y(lus[0] ?? 0))}`
+  for (let i = 1; i < lus.length; i++) {
+    const milieu = arrondi((x(i - 1) + x(i)) / 2)
+    trait += ` C${milieu},${arrondi(y(lus[i - 1] ?? 0))} ${milieu},${arrondi(y(lus[i] ?? 0))} ${arrondi(x(i))},${arrondi(y(lus[i] ?? 0))}`
+  }
+  const arrets = lus
+    .map((v, i) => `<stop offset="${lus.length > 1 ? Math.round((i * 100) / (lus.length - 1)) : 100}%" stop-color="${TEINTES[couleur(cle, v)]}"/>`)
+    .join('')
+  const source =
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${largeur}" height="${PX_HAUTEUR}" viewBox="0 0 ${largeur} ${PX_HAUTEUR}">` +
+    `<defs><linearGradient id="c" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="${largeur}" y2="0">${arrets}</linearGradient></defs>` +
+    `<path d="${trait} L${largeur},${PX_HAUTEUR} L0,${PX_HAUTEUR} Z" fill="url(#c)" fill-opacity="0.45"/>` +
+    `<path d="${trait}" fill="none" stroke="url(#c)" stroke-width="1.5" stroke-linejoin="round"/></svg>`
+  return { source, largeur, alt: t.alt(t.noms[cle], lus.length) }
+}
 const RELEVES_MAX = CARACTERES_MAX * 2
 const garder = <T,>(serie: T[], valeur: T) => [...serie, valeur].slice(-RELEVES_MAX)
 
@@ -180,14 +233,17 @@ function couleurEtat(temperature: number | null, ...taux: number[]) {
 }
 
 export const register: Register = (on, options) => {
-  const t = options.language === 'fr' ? TEXTES.fr : TEXTES.en
+  const t: Textes = options.language === 'fr' ? TEXTES.fr : TEXTES.en
   const NOM = t.nom
   const virgule = (n: number) => n.toFixed(1).replace('.', t.decimale)
-  const nomDuStyle = (s: Style) => (options.language === 'fr' ? s : NOMS_EN[s])
-  // Le style choisi à l'installation (option `sparkline` : bars, line ou filled).
-  const styleInstalle: Style = versStyle(options.sparkline) ?? 'barres'
+  const enFrancais = options.language === 'fr'
+  // Le style et la fréquence choisis à l'installation (options `sparkline` et `sampling`).
+  const styleInstalle: Style = versStyle(options.sparkline) ?? 'lisse'
+  const frequenceInstallee: Frequence = versFrequence(options.sampling) ?? 'normal'
   // La température est facultative : sans fichier réglé (option `temperatureFile`), elle n'est jamais lue.
   const fichierTemperature = typeof options.temperatureFile === 'string' ? options.temperatureFile.trim() : ''
+  // Relance le relevé à une autre fréquence : posé au démarrage de la session, appelé par /mac lent|normal|rapide.
+  let cadencer: (frequence: Frequence) => void = () => {}
 
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: 'mac', description: t.description, argumentHint: t.indice })
@@ -223,7 +279,14 @@ export const register: Register = (on, options) => {
     await update($, style, () => versStyle(styleRetenu) ?? styleInstalle)
     // Chaque session (et chaque rechargement du mod) repart d'un graphe vide : jamais de vieux points d'avant.
     await update($, historique, () => ({ cpu: [], charge: [], ram: [], temp: [] }))
-    $.clock.every(PERIODE_MS, () => void relever())
+    // La fréquence choisie par /mac passe avant celle de l'installation ; une seule minuterie tourne à la fois.
+    let minuterie: Timer | null = null
+    cadencer = frequence => {
+      minuterie?.cancel()
+      minuterie = $.clock.every(FREQUENCES[frequence], () => void relever())
+    }
+    const frequenceRetenue = await $.store.get(CLE_FREQUENCE).catch(() => null)
+    cadencer(versFrequence(frequenceRetenue) ?? frequenceInstallee)
     await relever()
 
     return next(e)
@@ -231,11 +294,18 @@ export const register: Register = (on, options) => {
 
   on('command.run', { command: 'mac' }, async ($, e) => {
     const demande = e.args.trim().toLowerCase()
-    const voulu = versStyle(demande)
-    if (voulu) {
-      await update($, style, () => voulu)
-      await $.store.set(CLE_STYLE, voulu)
-      return { text: t.style(nomDuStyle(voulu)) }
+    const styleVoulu = versStyle(demande)
+    if (styleVoulu) {
+      await update($, style, () => styleVoulu)
+      await $.store.set(CLE_STYLE, styleVoulu)
+      return { text: t.style(enFrancais ? styleVoulu : STYLES_EN[styleVoulu]) }
+    }
+    const frequenceVoulue = versFrequence(demande)
+    if (frequenceVoulue) {
+      cadencer(frequenceVoulue)
+      await $.store.set(CLE_FREQUENCE, frequenceVoulue)
+      const nom = enFrancais ? frequenceVoulue : FREQUENCES_EN[frequenceVoulue]
+      return { text: t.frequence(nom, FREQUENCES[frequenceVoulue] / 1000) }
     }
     if (demande) return { text: `${t.inconnu(demande)} ${t.aide}` }
 
@@ -249,7 +319,10 @@ export const register: Register = (on, options) => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey || (await read($, masque))) return next(e)
 
-    const { Box, Text } = $.ui.resolve(e)
+    const elements = $.ui.resolve(e)
+    const { Box, Text } = elements
+    // Le terminal ne dessine pas d'image vectorielle : son style lisse devient la courbe pleine en points.
+    const Svg = e.surface !== 'terminal' && 'Svg' in elements ? elements.Svg : null
     const m = analyser(await read($, sortie))
     const chaleur = degres(await read($, temperature))
     const autresLignes = await next(e)
@@ -283,7 +356,8 @@ export const register: Register = (on, options) => {
     const tient = `${chiffres}${swap}`.length <= e.props.bodyColumns
     // Jamais `h` : c'est la fabrique des éléments JSX.
     const passe: Historique = await read($, historique)
-    const choisi: Style = await read($, style)
+    const voulu: Style = await read($, style)
+    const choisi: Style = voulu === 'lisse' && !Svg ? 'pleine' : voulu
     const par = parCaractere(choisi)
     const traces = PRIORITE.filter(cle => cle !== 'temp' || chaleur !== null)
     const { cles, caracteres } = tient
@@ -311,8 +385,51 @@ export const register: Register = (on, options) => {
         </Text>
       )
 
+    const pastille = couleurEtat(
+      chaleur,
+      m.cpu,
+      (m.ramUtilisee / m.ramTotale) * 100,
+      ...(Number.isFinite(m.gpu) ? [m.gpu] : []),
+    )
+
+    // Style lisse : une image ne se glisse pas dans un texte ; la ligne devient une rangée de morceaux de texte et
+    // d'images, sans retour à la ligne, ce qui dépasse étant masqué. La place a déjà été comptée : rien ne devrait dépasser.
+    if (choisi === 'lisse' && Svg) {
+      const image = (cle: Cle) => {
+        if (!cles.includes(cle)) return null
+        const { source, largeur, alt } = courbeLisse(cle, passe[cle].slice(-caracteres * par), caracteres, t)
+        return [
+          <Text mono> </Text>,
+          <Svg source={source} alt={alt} width={largeur} height={PX_HAUTEUR} />,
+        ]
+      }
+      return (
+        <Box flexDirection="column">
+          <Box flexDirection="row" flexWrap="nowrap" overflow="hidden" alignItems="center">
+            <Text dimColor wrap="truncate-end">
+              <Text color={pastille}>● </Text>
+              <Text weight="medium">{NOM}</Text>
+              {textes.cpu}
+            </Text>
+            {image('cpu')}
+            <Text dimColor wrap="truncate-end">
+              {gpu}
+              {textes.ram}
+            </Text>
+            {image('ram')}
+            {textes.temp && <Text dimColor wrap="truncate-end">{textes.temp}</Text>}
+            {textes.temp && image('temp')}
+            <Text dimColor wrap="truncate-end">{textes.charge}</Text>
+            {image('charge')}
+            {tient && <Text dimColor wrap="truncate-end">{swap}</Text>}
+          </Box>
+          {autresLignes}
+        </Box>
+      )
+    }
+
     return barre(
-      couleurEtat(chaleur, m.cpu, (m.ramUtilisee / m.ramTotale) * 100, ...(Number.isFinite(m.gpu) ? [m.gpu] : [])),
+      pastille,
       textes.cpu,
       graphe('cpu'),
       gpu,

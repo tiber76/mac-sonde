@@ -1,6 +1,6 @@
 {
   "name": "mac-sonde",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "A line above the Claude Code prompt with your Mac's CPU, GPU, RAM, temperature, load and swap, each followed by a small colour sparkline (macOS only)",
   "author": {
     "name": "Jeremy L"
@@ -28,12 +28,24 @@
     "sparkline": {
       "type": "string",
       "title": "Sparkline style",
-      "description": "bars ▁▃▅█ (30 s of history) · line ⣀⡠⠊ (1 min, the line alone) · filled ⣀⣤⣶⣿ (1 min, area filled). Change it later with /mac bars, /mac line or /mac filled.",
-      "default": "bars",
+      "description": "smooth: a real continuous curve, area filled (desktop app; the terminal shows filled instead) · filled ⣀⣤⣶⣿ (dots) · line ⣀⡠⠊ (the line alone) · bars ▁▃▅█. Change it later with /mac smooth, /mac filled, /mac line or /mac bars.",
+      "default": "smooth",
       "options": [
-        "bars",
+        "smooth",
+        "filled",
         "line",
-        "filled"
+        "bars"
+      ]
+    },
+    "sampling": {
+      "type": "string",
+      "title": "Sampling rate",
+      "description": "slow: one reading every 10 s · normal: every 3 s · fast: every second. Change it later with /mac slow, /mac normal or /mac fast.",
+      "default": "normal",
+      "options": [
+        "slow",
+        "normal",
+        "fast"
       ]
     },
     "temperatureFile": {

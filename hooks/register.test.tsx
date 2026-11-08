@@ -1,8 +1,9 @@
 import { expect, test } from 'claude-code/testing'
 import type { TestBody } from 'claude-code/testing'
 
-// Ces tests lisent la ligne en français, avec un fichier de température réglé (le leur est simulé).
-const FR = { language: 'fr', temperatureFile: '/tmp/mac-temperature.txt' } as const
+// Ces tests lisent la ligne en français, en texte (style barres), avec un fichier de température réglé (le leur est
+// simulé) ; le style par défaut, `lisse`, dessine des images (graphe.test.tsx).
+const FR = { language: 'fr', temperatureFile: '/tmp/mac-temperature.txt', sparkline: 'bars' } as const
 const testFr = (nom: string, corps: TestBody) => test(nom, { options: FR }, corps)
 
 const bandeau = (bodyColumns = 80) =>
@@ -310,20 +311,20 @@ const ligneThisMac = async ($: any) => {
   return texte
 }
 
-test('by default the line is in English, with a dot as decimal separator', async ($, on) => {
+test('by default the line is in English, with a dot as decimal separator', { options: { sparkline: 'bars' } }, async ($, on) => {
   demarrage(on, () => avecGpu(48))
   await demarrer($)
   expect(await ligneThisMac($)).toBe('● This Mac · CPU 19 % · GPU 48 % · RAM 39.7 GiB · load 34 % · swap 5.0 GiB')
 })
 
-test('by default no temperature file is read', async ($, on) => {
+test('by default no temperature file is read', { options: { sparkline: 'bars' } }, async ($, on) => {
   demarrage(on, () => SORTIE, false, `${DATE} 58`)
   await demarrer($)
   expect(lus).toEqual([])
   expect(await ligneThisMac($)).not.toContain('°C')
 })
 
-test('a temperature file shows the temperature; ~/ is the home folder', { options: { temperatureFile: '~/sonde.txt' } }, async ($, on) => {
+test('a temperature file shows the temperature; ~/ is the home folder', { options: { temperatureFile: '~/sonde.txt', sparkline: 'bars' } }, async ($, on) => {
   demarrage(on, () => SORTIE, false, `${DATE} 58`)
   on('env.get', () => ({ value: '/Users/someone' }))
   await demarrer($)

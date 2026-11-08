@@ -1,11 +1,13 @@
 # mac-sonde
 
-A small line above the Claude Code prompt that shows how hard your Mac is working, refreshed every 3 seconds:
+A small line above the Claude Code prompt that shows how hard your Mac is working, refreshed every 3 seconds by default:
 
-![The mac-sonde line in its three sparkline styles: bars, line and filled, coloured green, orange and red](docs/styles.svg)
+![The mac-sonde line in its four sparkline styles: smooth, filled, line and bars, coloured green, orange and red](docs/styles.svg)
+
+<sub>Illustrations drawn from the mod's own drawing rules with sample readings, not screenshots.</sub>
 
 - **CPU**, **GPU**, **RAM** (counted like Activity Monitor: app memory, wired and compressed, without the cache), **temperature** (optional, see below), **load** (1-minute load average divided by the number of cores: 100 % means every core is busy, more means tasks are waiting) and **swap**.
-- Each value is followed by a sparkline, in a fixed-width font. Every character takes the colour of its highest reading: green below 70 %, orange from 70 %, red from 90 % (for the temperature: orange from 85 °C, red from 95 °C, height from 30 °C to 100 °C).
+- Each value is followed by a sparkline coloured by level: green below 70 %, orange from 70 %, red from 90 % (for the temperature: orange from 85 °C, red from 95 °C, height from 30 °C to 100 °C).
 - The dot at the start sums it up with the same thresholds.
 - The sparklines start empty at each new session.
 - `/mac` hides the line, and shows it again. The choice is remembered across sessions.
@@ -14,23 +16,37 @@ A small line above the Claude Code prompt that shows how hard your Mac is workin
 
 > Claude Code mods are in early access: the API may change and break this mod until it is updated.
 
-## Three sparkline styles
+## Four sparkline styles
 
 | Style | Looks like | History shown |
 | --- | --- | --- |
-| `bars` (default) | `▁▃▅█`: one reading per character, 8 heights | 10 readings, 30 s |
-| `line` | `⣀⡠⠊`: the line alone, in braille dots, two readings per character, 4 heights | 20 readings, 1 min |
-| `filled` | `⣀⣤⣶⣿`: the same line with the area below filled | 20 readings, 1 min |
+| `smooth` (default) | a real continuous curve, area filled, its colour sliding from one reading to the next; drawn as a small image | 20 readings, 1 min |
+| `filled` | `⣀⣤⣶⣿`: the curve in braille dots, area filled, two readings per character, 4 heights | 20 readings, 1 min |
+| `line` | `⣀⡠⠊`: the line alone, in braille dots | 20 readings, 1 min |
+| `bars` | `▁▃▅█`: one reading per character, 8 heights | 10 readings, 30 s |
+
+`smooth` is an image, which a terminal cannot draw: in a terminal session the line falls back to `filled`. The durations are at the normal sampling rate.
 
 Pick one when you install the mod (the **Sparkline style** setting), and switch at any time:
 
 ```
-/mac bars
-/mac line
+/mac smooth
 /mac filled
+/mac line
+/mac bars
 ```
 
-The style you pick with `/mac` is remembered across sessions and wins over the install setting. `/mac` alone still hides or shows the line; an unknown word shows the help and changes nothing. The French names (`barres`, `courbe`, `pleine`) work too.
+The style you pick with `/mac` is remembered across sessions and wins over the install setting. `/mac` alone still hides or shows the line; an unknown word shows the help and changes nothing. The French names (`lisse`, `pleine`, `courbe`, `barres`) work too.
+
+## Sampling rate
+
+| Rate | One reading every |
+| --- | --- |
+| `slow` | 10 s |
+| `normal` (default) | 3 s |
+| `fast` | 1 s |
+
+Pick one when you install the mod (the **Sampling rate** setting), or switch with `/mac slow`, `/mac normal` or `/mac fast`; the choice is remembered and wins over the install setting (`lent`, `normal`, `rapide` work too). There is no faster rate on purpose: each reading runs five system commands, and doing that more than once a second would weigh on the very CPU it measures.
 
 ## Narrow windows
 
@@ -63,7 +79,8 @@ Run `/config` and look for the mac-sonde rows:
 | Setting | Values | Default |
 | --- | --- | --- |
 | Language | `en` (English) or `fr` (français) | `en` |
-| Sparkline style | `bars`, `line` or `filled` | `bars` |
+| Sparkline style | `smooth`, `filled`, `line` or `bars` | `smooth` |
+| Sampling rate | `slow`, `normal` or `fast` | `normal` |
 | Temperature file | path to a file, `~/` allowed | empty: no temperature |
 
 ## Temperature (optional)

@@ -1,19 +1,18 @@
 import { expect, mock, test } from 'claude-code/testing'
-import type { TestBody } from 'claude-code/testing'
 
-// Ces tests lisent la ligne en français, avec un fichier de température réglé (le leur est simulé) ; `style` est
-// l'option d'installation `sparkline` (bars, line ou filled).
+// Ces tests lisent la ligne en français, avec un fichier de température réglé (le leur est simulé). Le style par
+// défaut est `lisse` (images vectorielles) ; la plupart portent sur les autres styles, en texte.
 const FR = { language: 'fr', temperatureFile: '/tmp/mac-temperature.txt' } as const
-const testFr = (nom: string, corps: TestBody, style?: 'bars' | 'line' | 'filled') =>
-  test(nom, { options: style ? { ...FR, sparkline: style } : FR }, corps)
+const LISSE = { options: FR } as const
+const BARRES = { options: { ...FR, sparkline: 'bars' } } as const
 // Comme si la personne tapait /mac : le moteur estampille l'origine et l'affichage, que le test n'a pas à fournir.
 const lancerMac = ($: any, args: string) => $.command.run({ command: 'mac', args })
 
-const bandeau = (bodyColumns: number) =>
+const bandeau = (bodyColumns: number, surface: 'desktop' | 'terminal' = 'desktop') =>
   ({
     plugin: 'mac-sonde',
     component: 'AbovePrompt',
-    surface: 'desktop',
+    surface,
     props: {
       hasSurvey: false,
       isWorking: false,
@@ -23,6 +22,11 @@ const bandeau = (bodyColumns: number) =>
       view: {},
     },
   }) as const
+
+// Couleurs des courbes lisses (une image ne lit pas les couleurs du thème) : vert, orange, rouge.
+const VERT = '#3fa34d'
+const ORANGE = '#d9922e'
+const ROUGE = '#d9534f'
 
 const DATE = 1_800_000_000
 const PERIODE_MS = 3000
@@ -85,12 +89,12 @@ const TROIS: Mesure[] = [
   [100, 120],
 ]
 
-testFr('chaque graphe suit sa valeur : CPU, RAM, charge', async ($, on) => {
+test('chaque graphe suit sa valeur : CPU, RAM, charge', BARRES, async ($, on) => {
   await apres($, on, TROIS)
   expect(await ligne($, 200)).toBe('● Ce Mac · CPU 100 % ▁▅█ · RAM 39,7 Gio ▅▅▅ · charge 120 % ▁▃█ · swap 5,0 Gio')
 })
 
-testFr('la température a son graphe, de 30 °C (▁) à 100 °C (█)', async ($, on) => {
+test('la température a son graphe, de 30 °C (▁) à 100 °C (█)', BARRES, async ($, on) => {
   await apres($, on, [
     [0, 0, 30],
     [0, 0, 86],
@@ -99,17 +103,17 @@ testFr('la température a son graphe, de 30 °C (▁) à 100 °C (█)', async (
   expect(await ligne($, 200)).toContain(' · 100 °C ▁▇█ · ')
 })
 
-testFr('un seul relevé : pas encore de graphe', async ($, on) => {
+test('un seul relevé : pas encore de graphe', BARRES, async ($, on) => {
   await apres($, on, [[40, 40]])
   expect(await ligne($, 200)).toBe('● Ce Mac · CPU 40 % · RAM 39,7 Gio · charge 40 % · swap 5,0 Gio')
 })
 
-testFr('chaque graphe garde les 10 derniers relevés', async ($, on) => {
+test('chaque graphe garde les 10 derniers relevés', BARRES, async ($, on) => {
   await apres($, on, Array.from({ length: 40 }, (_, n): Mesure => [n < 30 ? 100 : 0, 0]))
   expect(await ligne($, 300)).toContain(`CPU 0 % ${'▁'.repeat(10)} · `)
 })
 
-testFr('place comptée : les graphes raccourcissent ensemble, jusqu’à 5 points', async ($, on) => {
+test('place comptée : les graphes raccourcissent ensemble, jusqu’à 5 points', BARRES, async ($, on) => {
   await apres($, on, Array.from({ length: 12 }, (): Mesure => [0, 0]))
   const nu = sansGraphes(await ligne($, 300))
   // Trois graphes (CPU, RAM, charge) : une espace et `n` points chacun.
@@ -118,7 +122,7 @@ testFr('place comptée : les graphes raccourcissent ensemble, jusqu’à 5 point
   expect(await ligne($, nu.length + 3 * 6)).toContain(`charge 0 % ${'▁'.repeat(5)} · `)
 })
 
-testFr('place manquante : la RAM part d’abord, puis la température, puis la charge, le CPU en dernier', async ($, on) => {
+test('place manquante : la RAM part d’abord, puis la température, puis la charge, le CPU en dernier', BARRES, async ($, on) => {
   await apres($, on, [
     [0, 0, 30],
     [50, 25, 30],
@@ -136,7 +140,7 @@ testFr('place manquante : la RAM part d’abord, puis la température, puis la c
   expect(await ligne($, nu.length + 3)).toBe(nu)
 })
 
-testFr('fenêtre étroite : les graphes partent avant le swap', async ($, on) => {
+test('fenêtre étroite : les graphes partent avant le swap', BARRES, async ($, on) => {
   await apres($, on, TROIS.slice(0, 2))
   // Un graphe de 2 points prend 3 colonnes : avec 2 de libres, plus aucun graphe, mais le swap reste.
   const texte = await ligne($, sansGraphes(await ligne($, 200)).length + 2)
@@ -146,7 +150,7 @@ testFr('fenêtre étroite : les graphes partent avant le swap', async ($, on) =>
 
 // Le desktop dessine le texte en police proportionnelle mais compte la place en cellules à chasse fixe :
 // les graphes passent en chasse fixe, et la ligne est coupée en bout plutôt que de passer à la ligne suivante.
-testFr('ligne bornée : jamais de retour à la ligne, graphes en chasse fixe', async ($, on) => {
+test('ligne bornée : jamais de retour à la ligne, graphes en chasse fixe', BARRES, async ($, on) => {
   await apres($, on, TROIS)
   const ui = await $.ui.mount(bandeau(200))
   const dessin = JSON.stringify(await ui.drawn())
@@ -164,7 +168,7 @@ const couleursDesBarres = (noeud: any): string[] =>
       : (noeud.children ?? []).flatMap(couleursDesBarres)
     : []
 
-testFr('couleurs : chaque barre suit son niveau', async ($, on) => {
+test('couleurs : chaque barre suit son niveau', BARRES, async ($, on) => {
   await apres($, on, [
     [10, 69, 84],
     [75, 70, 85],
@@ -188,27 +192,27 @@ const QUATRE: Mesure[] = [
   [100, 0],
 ]
 
-testFr('style pleine : l’aire sous la courbe est remplie, deux relevés par caractère', async ($, on) => {
+test('style pleine : l’aire sous la courbe est remplie, deux relevés par caractère', { options: { ...FR, sparkline: 'filled' } }, async ($, on) => {
   await apres($, on, QUATRE)
   expect(await ligne($, 200)).toContain(' · CPU 100 % ⣰⣿ · ')
-}, 'filled')
+})
 
-testFr('style courbe : seulement le trait, relié d’un relevé à l’autre', async ($, on) => {
+test('style courbe : seulement le trait, relié d’un relevé à l’autre', { options: { ...FR, sparkline: 'line' } }, async ($, on) => {
   await apres($, on, QUATRE)
   expect(await ligne($, 200)).toContain(' · CPU 100 % ⣰⠋ · ')
-}, 'line')
+})
 
-testFr('style par défaut : les barres', async ($, on) => {
+test('style barres : un relevé par caractère', BARRES, async ($, on) => {
   await apres($, on, QUATRE)
   expect(await ligne($, 200)).toContain(' · CPU 100 % ▁▅██ · ')
 })
 
-testFr('courbes : 20 relevés tiennent dans 10 caractères', async ($, on) => {
+test('courbes : 20 relevés tiennent dans 10 caractères', { options: { ...FR, sparkline: 'filled' } }, async ($, on) => {
   await apres($, on, Array.from({ length: 25 }, (): Mesure => [0, 0]))
   expect(await ligne($, 300)).toContain(` · CPU 0 % ${'⣀'.repeat(10)} · `)
-}, 'filled')
+})
 
-testFr('/mac pleine change le style, retient ce choix et passe avant l’option', async ($, on) => {
+test('/mac pleine change le style, retient ce choix et passe avant l’option', { options: { ...FR, sparkline: 'bars' } }, async ($, on) => {
   const horloge = await apres($, on, QUATRE)
   const { text } = await lancerMac($, ' Pleine ')
   expect(text).toContain('pleine')
@@ -218,14 +222,14 @@ testFr('/mac pleine change le style, retient ce choix et passe avant l’option'
   await $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
   await horloge.advance(PERIODE_MS)
   expect(await ligne($, 200)).toMatch(/ · CPU 100 % [⠀-⣿]+ · /)
-}, 'bars')
+})
 
-testFr('un style retenu dans une autre session vaut au démarrage', async ($, on) => {
+test('un style retenu dans une autre session vaut au démarrage', BARRES, async ($, on) => {
   await apres($, on, QUATRE, { graphe: 'courbe' })
   expect(await ligne($, 200)).toContain(' · CPU 100 % ⣰⠋ · ')
 })
 
-testFr('/mac avec un mot inconnu : rien ne change, l’aide liste les styles', async ($, on) => {
+test('/mac avec un mot inconnu : rien ne change, l’aide liste les styles', BARRES, async ($, on) => {
   await apres($, on, QUATRE)
   const { text } = await lancerMac($, 'arc-en-ciel')
   expect(text).toContain('barres')
@@ -234,13 +238,150 @@ testFr('/mac avec un mot inconnu : rien ne change, l’aide liste les styles', a
   expect(await ligne($, 200)).toContain(' · CPU 100 % ▁▅██ · ')
 })
 
-// En anglais (réglages par défaut) : noms anglais des styles, réponses en anglais ; les noms français restent acceptés.
+// Style `lisse`, le défaut : une vraie courbe continue, dessinée en image vectorielle (Svg) derrière chaque valeur,
+// l'aire remplie, la couleur glissant du vert au rouge selon le niveau. Le terminal ne dessine pas d'image :
+// il se replie sur la courbe pleine en points.
+const svgs = (noeud: any): any[] =>
+  noeud && typeof noeud === 'object'
+    ? noeud.type === 'Svg'
+      ? [noeud.props]
+      : (noeud.children ?? []).flatMap(svgs)
+    : []
+
+async function dessin($: any, colonnes: number, surface: 'desktop' | 'terminal' = 'desktop') {
+  const ui = await $.ui.mount(bandeau(colonnes, surface))
+  const arbre = await ui.drawn()
+  const texte = (await ui.find({ type: 'Text', text: /Ce Mac/ }))?.text ?? ''
+  await ui.unmount()
+  return { arbre, json: JSON.stringify(arbre), texte }
+}
+
+test('style lisse par défaut : une image vectorielle par graphe, le texte autour', LISSE, async ($, on) => {
+  await apres($, on, QUATRE)
+  const { arbre, json } = await dessin($, 200)
+  const images = svgs(arbre)
+  // CPU, RAM et charge (pas de température lue ici), dans l'ordre de la ligne.
+  expect(images.map(p => p.alt)).toEqual([
+    expect.stringContaining('CPU'),
+    expect.stringContaining('RAM'),
+    expect.stringContaining('charge'),
+  ])
+  for (const image of images) {
+    expect(image.source).toStartWith('<svg')
+    expect(image.source).toContain('<path')
+  }
+  for (const morceau of ['Ce Mac', ' · CPU 100 %', ' · RAM 39,7 Gio', ' · charge 0 %', ' · swap 5,0 Gio']) {
+    expect(json).toContain(morceau)
+  }
+})
+
+test('lisse : la couleur suit le niveau de chaque relevé', LISSE, async ($, on) => {
+  await apres($, on, [
+    [10, 0],
+    [75, 0],
+    [95, 0],
+    [95, 0],
+  ])
+  const [cpu] = svgs((await dessin($, 200)).arbre)
+  expect(cpu.source).toContain(VERT)
+  expect(cpu.source).toContain(ORANGE)
+  expect(cpu.source).toContain(ROUGE)
+})
+
+test('lisse dans le terminal : repli sur la courbe pleine en points', LISSE, async ($, on) => {
+  await apres($, on, QUATRE)
+  const { arbre, texte } = await dessin($, 200, 'terminal')
+  expect(svgs(arbre)).toEqual([])
+  expect(texte).toContain(' · CPU 100 % ⣰⣿ · ')
+})
+
+test('lisse : place comptée, les graphes partent par priorité, le CPU en dernier', LISSE, async ($, on) => {
+  await apres($, on, QUATRE)
+  const nu = '● Ce Mac · CPU 100 % · RAM 39,7 Gio · charge 0 % · swap 5,0 Gio'
+  // Quatre relevés : deux cases par graphe, plus une espace.
+  expect(svgs((await dessin($, nu.length + 9)).arbre)).toHaveLength(3)
+  expect(svgs((await dessin($, nu.length + 8)).arbre).map(p => p.alt)).toEqual([
+    expect.stringContaining('CPU'),
+    expect.stringContaining('charge'),
+  ])
+  expect(svgs((await dessin($, nu.length + 3)).arbre)).toHaveLength(1)
+  expect(svgs((await dessin($, nu.length + 2)).arbre)).toHaveLength(0)
+})
+
+test('/mac lisse revient au style lisse', BARRES, async ($, on) => {
+  await apres($, on, QUATRE)
+  const { text } = await lancerMac($, 'lisse')
+  expect(text).toContain('lisse')
+  expect(svgs((await dessin($, 200)).arbre)).toHaveLength(3)
+})
+
+// Fréquence de relevé : lent (10 s), normal (3 s, le défaut) ou rapide (1 s), à l'installation (option `sampling`)
+// ou avec `/mac lent|normal|rapide`, retenue comme le style.
+async function pointsCpu($: any) {
+  return ((await ligne($, 300)).match(/CPU \d+ % ([▁-█]*)/)?.[1] ?? '').length
+}
+
+test('fréquence normale par défaut : un relevé toutes les 3 s', BARRES, async ($, on) => {
+  const horloge = await apres($, on, [[0, 0]])
+  await horloge.advance(9000)
+  expect(await pointsCpu($)).toBe(4)
+})
+
+test('fréquence rapide à l’installation : un relevé chaque seconde', { options: { ...FR, sparkline: 'bars', sampling: 'fast' } }, async ($, on) => {
+  const horloge = await apres($, on, [[0, 0]])
+  await horloge.advance(3000)
+  expect(await pointsCpu($)).toBe(4)
+})
+
+test('/mac lent : un relevé toutes les 10 s, retenu pour la suite', BARRES, async ($, on) => {
+  const horloge = await apres($, on, [[0, 0]])
+  const { text } = await lancerMac($, 'Lent')
+  expect(text).toContain('lent')
+  await horloge.advance(20_000)
+  expect(await pointsCpu($)).toBe(3)
+})
+
+test('/mac rapide puis normal : la fréquence change à chaque fois, sans doubler les relevés', BARRES, async ($, on) => {
+  const horloge = await apres($, on, [[0, 0]])
+  await lancerMac($, 'rapide')
+  await horloge.advance(2000)
+  await lancerMac($, 'normal')
+  await horloge.advance(3000)
+  expect(await pointsCpu($)).toBe(4)
+})
+
+test('une fréquence retenue dans une autre session vaut au démarrage', BARRES, async ($, on) => {
+  const horloge = await apres($, on, [[0, 0]], { frequence: 'rapide' })
+  await horloge.advance(3000)
+  expect(await pointsCpu($)).toBe(4)
+})
+
+test('/mac avec un mot inconnu : l’aide liste aussi les fréquences', BARRES, async ($, on) => {
+  await apres($, on, QUATRE)
+  const { text } = await lancerMac($, '30ms')
+  for (const mot of ['lisse', 'lent', 'normal', 'rapide']) expect(text).toContain(mot)
+})
+
+// En anglais (réglages par défaut) : noms anglais des styles et des fréquences, réponses en anglais ; les noms français
+// restent acceptés.
 async function ligneEn($: any, colonnes: number) {
   const ui = await $.ui.mount(bandeau(colonnes))
   const texte = (await ui.find({ type: 'Text', text: /This Mac/ }))?.text ?? ''
   await ui.unmount()
   return texte
 }
+
+test('by default the sparklines are smooth images, described in English', async ($, on) => {
+  await apres($, on, QUATRE)
+  const ui = await $.ui.mount(bandeau(200))
+  const images = svgs(await ui.drawn())
+  await ui.unmount()
+  expect(images.map(p => p.alt)).toEqual([
+    'CPU: curve of the last 4 readings',
+    'RAM: curve of the last 4 readings',
+    'load: curve of the last 4 readings',
+  ])
+})
 
 test('install option sparkline: filled draws the filled curve', { options: { sparkline: 'filled' } }, async ($, on) => {
   await apres($, on, QUATRE)
@@ -254,18 +395,37 @@ test('/mac line switches to the line style and answers in English', async ($, on
   expect(await ligneEn($, 200)).toContain(' · CPU 100 % ⣰⠋ · ')
 })
 
+test('/mac smooth goes back to the smooth images', { options: { sparkline: 'bars' } }, async ($, on) => {
+  await apres($, on, QUATRE)
+  expect((await lancerMac($, 'smooth')).text).toBe('Sparklines now in smooth style.')
+  const ui = await $.ui.mount(bandeau(200))
+  expect(svgs(await ui.drawn())).toHaveLength(3)
+  await ui.unmount()
+})
+
 test('/mac also takes the French style names', async ($, on) => {
   await apres($, on, QUATRE)
   await lancerMac($, 'pleine')
   expect(await ligneEn($, 200)).toContain(' · CPU 100 % ⣰⣿ · ')
 })
 
-test('/mac with an unknown word: nothing changes, the help lists the English styles', async ($, on) => {
+test('install option sampling: slow takes a reading every 10 s', { options: { sparkline: 'bars', sampling: 'slow' } }, async ($, on) => {
+  const horloge = await apres($, on, [[0, 0]])
+  await horloge.advance(20_000)
+  expect(((await ligneEn($, 300)).match(/CPU \d+ % ([▁-█]*)/)?.[1] ?? '').length).toBe(3)
+})
+
+test('/mac fast answers in English', async ($, on) => {
+  await apres($, on, QUATRE)
+  expect((await lancerMac($, 'fast')).text).toBe('Sampling fast: one reading every 1 s.')
+})
+
+test('/mac with an unknown word: nothing changes, the help lists the English styles and rates', { options: { sparkline: 'bars' } }, async ($, on) => {
   await apres($, on, QUATRE)
   const { text } = await lancerMac($, 'rainbow')
-  expect(text).toContain('Unknown style: "rainbow".')
-  expect(text).toContain('/mac bars')
-  expect(text).toContain('/mac line')
-  expect(text).toContain('/mac filled')
+  expect(text).toContain('Unknown setting: "rainbow".')
+  for (const mot of ['/mac smooth', '/mac filled', '/mac line', '/mac bars', '/mac slow', '/mac normal', '/mac fast']) {
+    expect(text).toContain(mot)
+  }
   expect(await ligneEn($, 200)).toContain(' · CPU 100 % ▁▅██ · ')
 })
