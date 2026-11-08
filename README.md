@@ -6,16 +6,38 @@ A small line above the Claude Code prompt that shows how hard your Mac is workin
 
 <sub>Illustrations drawn from the mod's own drawing rules with sample readings, not screenshots.</sub>
 
-- **CPU**, **GPU**, **RAM** (counted like Activity Monitor: app memory, wired and compressed, without the cache), **temperature** (optional, see below), **load** (1-minute load average divided by the number of cores: 100 % means every core is busy, more means tasks are waiting) and **swap**.
+- **CPU**, **GPU**, **RAM**, **temperature** (optional, see below), **load** and **swap**, measured the way CleanMyMac shows them (see [How each value is measured](#how-each-value-is-measured)).
 - Each value is followed by a sparkline coloured by level: green below 70 %, orange from 70 %, red from 90 % (for the temperature: orange from 85 °C, red from 95 °C, height from 30 °C to 100 °C).
 - The dot at the start sums it up with the same thresholds.
 - The sparklines start empty at each new session.
 - `/mac` hides the line, and shows it again. The choice is remembered across sessions.
 - After `/mac `, start a word and the prompt box suggests the ones it understands (`/mac s` → `smooth`, `slow`), each with a short description.
 
-**macOS only.** It reads the system with `sysctl`, `vm_stat`, `ioreg` and `ps`, which ship with macOS; nothing to install, no administrator rights, nothing sent anywhere. On another system the line shows "no reading".
+**macOS only.** It reads the system with `sysctl`, `vm_stat`, `ioreg` and `iostat`, which ship with macOS; nothing to install, no administrator rights, nothing sent anywhere. On another system the line shows "no reading".
 
 > Claude Code mods are in early access: the API may change and break this mod until it is updated.
+
+## How each value is measured
+
+Monitoring apps disagree because they do not count the same thing. Since 1.4.0, mac-sonde follows CleanMyMac, the reference most people compare against.
+
+| Value | What is counted | Read from |
+| --- | --- | --- |
+| CPU | Share of time all cores spent doing work over the last second (user + system), like `top`, Activity Monitor or CleanMyMac | `iostat -c 2 -w 1`: 100 % minus the idle share |
+| RAM | Active + wired + compressed memory. Inactive pages, file cache and free pages are left out: macOS hands them back as soon as an app asks, which is what CleanMyMac calls "available" | `vm_stat`: `Pages active`, `Pages wired down`, `Pages occupied by compressor` |
+| Temperature | The hottest CPU die sensor, rounded to the degree | the helper in `extras/` (see below) |
+| Load | 1-minute load average divided by the number of cores: 100 % means every core is busy, more means tasks are waiting. It counts tasks waiting for the disk too, so it is not the CPU, and CleanMyMac does not show it | `sysctl vm.loadavg` |
+| Swap | Swap space in use | `sysctl vm.swapusage` |
+| GPU | Device utilisation reported by the graphics driver | `ioreg` |
+
+Units: memory is in GiB (1 GiB = 1024³ bytes). CleanMyMac writes "Go"/"GB" but counts the same way: a 48 GiB Mac shows "48".
+
+Why these choices, and what changed from 1.3.0:
+
+- **CPU.** Up to 1.3.0, the CPU was the sum of each process's `%CPU` from `ps`. That figure is smoothed over about a minute, misses processes that already ended and part of the system time: under load it read 2 to 3 times lower than `top` (15 % against 44 % in one measurement). The new reading is the real share of the last second, so a reading takes about one second.
+- **RAM.** Up to 1.3.0, the RAM followed Activity Monitor's "Memory used", which counts all app memory, inactive pages included. It read 4 to 5 GiB above CleanMyMac on a 48 GiB Mac. Active + wired + compressed is exactly CleanMyMac's "used" (48 − "available").
+- **Temperature.** Up to 1.3.0, the helper wrote macmon's average of every sensor, truncated to the degree, every 15 s. Under load the hottest core runs 10 to 20 °C above that average (78 °C average against 96 °C in CleanMyMac). It now writes the hottest die sensor, every 5 s. A hot Apple Silicon chip near 100 °C under full load is normal: it slows itself down before any harm.
+- **Swap** did not change: it already matched CleanMyMac.
 
 ## Four sparkline styles
 
@@ -47,7 +69,7 @@ The style you pick with `/mac` is remembered across sessions and wins over the i
 | `normal` (default) | 3 s |
 | `fast` | 1 s |
 
-Pick one when you install the mod (the **Sampling rate** setting), or switch with `/mac slow`, `/mac normal` or `/mac fast`; the choice is remembered and wins over the install setting (`lent`, `normal`, `rapide` work too). There is no faster rate on purpose: each reading runs five system commands, and doing that more than once a second would weigh on the very CPU it measures.
+Pick one when you install the mod (the **Sampling rate** setting), or switch with `/mac slow`, `/mac normal` or `/mac fast`; the choice is remembered and wins over the install setting (`lent`, `normal`, `rapide` work too). There is no faster rate on purpose: each reading runs five system commands and watches the CPU for one second, so a faster rate would weigh on the very CPU it measures.
 
 ## Narrow windows
 
@@ -89,12 +111,12 @@ Run `/config` and look for the mac-sonde rows:
 macOS gives no temperature to ordinary commands, so mac-sonde reads it from a file you keep fresh. The file holds one line, the time in Unix seconds then the temperature in degrees Celsius:
 
 ```
-1762620000 58
+1762620000 58.4
 ```
 
-A value older than 60 seconds is ignored, so the temperature disappears on its own if your tool stops.
+Decimals are allowed; the line rounds to the degree. A value older than 60 seconds is ignored, so the temperature disappears on its own if your tool stops.
 
-On Apple Silicon, [macmon](https://github.com/vladkens/macmon) reads it without administrator rights. The `extras/` folder holds a helper script and a launchd service that keep `~/.mac-sonde/temperature.txt` up to date:
+On Apple Silicon, [macmon](https://github.com/vladkens/macmon) reads it without administrator rights. The `extras/` folder holds a helper script and a launchd service that keep `~/.mac-sonde/temperature.txt` up to date, every 5 seconds, with the hottest CPU die sensor (`PMU tdie…` in `macmon debug`), as CleanMyMac or iStat Menus show it. If macmon lists no die sensor for your chip, the helper falls back to macmon's average of every sensor, which reads lower under load.
 
 ```bash
 brew install macmon
@@ -105,6 +127,13 @@ launchctl load ~/Library/LaunchAgents/mac-sonde.temperature.plist
 ```
 
 Then set **Temperature file** to `~/.mac-sonde/temperature.txt` in `/config`. To stop it: `launchctl unload ~/Library/LaunchAgents/mac-sonde.temperature.plist`.
+
+Coming from 1.3.0 or earlier, copy the new helper and restart the service, or the old average stays:
+
+```bash
+cp extras/mac-sonde-temperature.sh ~/.mac-sonde/
+launchctl kickstart -k gui/$(id -u)/mac-sonde.temperature
+```
 
 Why a background service: run from inside Claude Code's command sandbox, macmon cannot subscribe to the sensors.
 

@@ -21,27 +21,27 @@ const bandeau = (bodyColumns = 80) =>
     },
   }) as const
 
-// 64 Gio, 10 cœurs, pages de 16 Ko : (2 000 000 - 100 000 + 300 000 + 400 000) pages = 39,7 Gio utilisés.
+// 64 Gio, 10 cœurs, pages de 16 Ko : actives + câblées + compressées = (1 900 000 + 300 000 + 400 000) pages = 39,7 Gio
+// utilisés. Les pages anonymes (3 000 000, dont des inactives) ne comptent pas : sinon ce serait 54,9 Gio.
+// CPU : la dernière ligne d'iostat, mesurée sur la dernière seconde, 81 % au repos, soit 19 % de CPU.
 const SORTIE = `68719476736
 10
 { 3.44 3.19 3.44 }
 total = 7168.00M  used = 5120.00M  free = 2048.00M  (encrypted)
 Mach Virtual Memory Statistics: (page size of 16384 bytes)
 Pages free:                                   294526.
+Pages active:                                1900000.
 Pages wired down:                             300000.
 Pages purgeable:                              100000.
-Anonymous pages:                             2000000.
+Anonymous pages:                             3000000.
 Pages occupied by compressor:                 400000.
- %CPU
- 120.5
-  60.0
-   9.5
+iostat:  12  7 81  3.44 3.19 3.44
 `
 
 const DATE = 1_800_000_000
 
-// Ce que `ioreg` rend pour le GPU : une ligne, placée avant la liste des processus.
-const avecGpu = (pourcent: number) => SORTIE.replace(' %CPU', `"Device Utilization %"=${pourcent}\n %CPU`)
+// Ce que `ioreg` rend pour le GPU : une ligne, placée avant celle d'iostat.
+const avecGpu = (pourcent: number) => SORTIE.replace('iostat:', `"Device Utilization %"=${pourcent}\niostat:`)
 
 let dernierReleve = ''
 // Les chemins que le mod a lus pendant le test.
@@ -88,7 +88,7 @@ const lancerMac = ($: any) => $.command.run({ command: 'mac', args: '' })
 
 const demarrer = ($: any) => $.session.start({ cwd: '/', surface: 'desktop', isInteractive: true })
 
-testFr('la ligne donne le CPU moyen des cœurs et la RAM utilisée', async ($, on) => {
+testFr('la ligne donne le CPU de la dernière seconde et la RAM active, câblée et compressée', async ($, on) => {
   demarrage(on, () => SORTIE)
   await demarrer($)
 
@@ -126,10 +126,10 @@ for (const sortie of ['', 'n importe quoi', new Error('échec')]) {
 
 for (const [nom, sortie, couleur] of [
   ['tout va bien', SORTIE, 'success'],
-  ['CPU à 79 %', SORTIE.replace('120.5', '720.5'), 'warning'],
-  ['RAM à 86 %', SORTIE.replace('2000000', '3000000'), 'warning'],
-  ['CPU à 91 %', SORTIE.replace('120.5', '840.5'), 'error'],
-  ['RAM à 98 %', SORTIE.replace('2000000', '3500000'), 'error'],
+  ['CPU à 79 %', SORTIE.replace('7 81', '7 21'), 'warning'],
+  ['RAM à 86 %', SORTIE.replace('1900000', '2900000'), 'warning'],
+  ['CPU à 91 %', SORTIE.replace('7 81', '7 9'), 'error'],
+  ['RAM à 98 %', SORTIE.replace('1900000', '3410000'), 'error'],
 ] as const) {
   testFr(`pastille : ${nom} donne ${couleur}`, async ($, on) => {
     demarrage(on, () => sortie)
@@ -204,6 +204,13 @@ testFr('température fraîche : affichée juste après la RAM', async ($, on) =>
   demarrage(on, () => SORTIE, false, `${DATE} 58`)
   await demarrer($)
   expect((await ligneMac($)).texte).toContain('RAM 39,7 Gio · 58 °C · charge 34 % · swap 5,0 Gio')
+})
+
+// Le relais écrit la température au centième (capteur le plus chaud) : la ligne l'arrondit au degré.
+testFr('température au centième : arrondie au degré', async ($, on) => {
+  demarrage(on, () => SORTIE, false, `${DATE} 77.65`)
+  await demarrer($)
+  expect((await ligneMac($)).texte).toContain('RAM 39,7 Gio · 78 °C · charge')
 })
 
 testFr('ligne étroite : la température reste affichée', async ($, on) => {

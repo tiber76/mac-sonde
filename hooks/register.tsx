@@ -74,11 +74,13 @@ const SEUIL_SATURE = 90
 const SEUIL_CHAUD = 85
 const SEUIL_BRULANT = 95
 // Un seul appel : RAM totale, cœurs, charge, échange, pages mémoire, le GPU (une ligne, absente si ioreg ne répond pas),
-// puis le CPU de chaque processus : cette liste reste en dernier, `analyser` la somme jusqu'à la fin.
+// puis le CPU de la dernière seconde, lu par iostat : temps passé hors repos par tous les cœurs, comme top, le Moniteur
+// d'activité ou CleanMyMac. Pas la somme des %CPU de `ps` : une moyenne lissée sur une minute, qui oublie les processus
+// déjà terminés et une part du temps système, et qui sous-estimait le CPU d'un facteur 2 à 3 sous charge.
 const RELEVE = [
   '/bin/sh',
   '-c',
-  `sysctl -n hw.memsize hw.ncpu vm.loadavg vm.swapusage; vm_stat; ioreg -r -d 1 -w0 -c IOAccelerator | grep -o '"Device Utilization %"=[0-9]*'; ps -A -o %cpu`,
+  `sysctl -n hw.memsize hw.ncpu vm.loadavg vm.swapusage; vm_stat; ioreg -r -d 1 -w0 -c IOAccelerator | grep -o '"Device Utilization %"=[0-9]*'; printf 'iostat: %s\\n' "$(iostat -n 0 -c 2 -w 1 | tail -n 1)"`,
 ]
 
 const sortie = atom({ plugin: 'mac-sonde', key: 'sortie' } as const, null)
@@ -217,15 +219,15 @@ function analyser(texte: string | null) {
   if (!texte) return null
 
   const lignes = texte.split('\n')
-  const entete = lignes.findIndex(l => l.trim() === '%CPU')
   const ramTotale = Number(lignes[0])
   const coeurs = Number(lignes[1])
   const page = chiffre(texte, /page size of (\d+) bytes/)
   const pages = (nom: string) => chiffre(texte, new RegExp(`${nom}:\\s+(\\d+)\\.`))
-  // Comme le Moniteur d'activité : mémoire des apps, mémoire câblée et mémoire compressée, sans le cache.
-  const ramUtilisee =
-    (pages('Anonymous pages') - pages('Pages purgeable') + pages('Pages wired down') + pages('Pages occupied by compressor')) * page
-  const cpu = lignes.slice(entete + 1).reduce((somme, l) => somme + Number(l || 0), 0) / coeurs
+  // Comme CleanMyMac : mémoire active, câblée (« résidente ») et compressée. Le reste (pages inactives, cache,
+  // libres) est rendu aussitôt qu'une app en demande : c'est la mémoire « disponible ».
+  const ramUtilisee = (pages('Pages active') + pages('Pages wired down') + pages('Pages occupied by compressor')) * page
+  // iostat : % utilisateur, % système, % au repos, puis la charge ; le CPU est ce qui n'est pas au repos.
+  const cpu = 100 - chiffre(texte, /iostat:\s+\d+\s+\d+\s+(\d+)/)
   const echangeGo = chiffre(texte, /used = ([\d.]+)M/) / MO_PAR_GO
   const charge = chiffre(texte, /\{ ([\d.]+) /)
 
@@ -233,7 +235,7 @@ function analyser(texte: string | null) {
   const gpu = chiffre(texte, /"Device Utilization %"=(\d+)/)
 
   const mesure = { cpu, ramTotale, ramUtilisee, echangeGo, charge, coeurs }
-  return entete > 0 && Object.values(mesure).every(Number.isFinite) ? { ...mesure, gpu } : null
+  return Object.values(mesure).every(Number.isFinite) ? { ...mesure, gpu } : null
 }
 
 // Format du relais : date (s) · température (°C). Absente ou trop ancienne, elle n'est simplement pas affichée.
@@ -374,7 +376,7 @@ export const register: Register = (on, options) => {
     const textes: Record<Cle, string> = {
       cpu: ` · CPU ${Math.round(m.cpu)} %`,
       ram: ` · RAM ${virgule(m.ramUtilisee / OCTETS_PAR_GO)} ${t.go}`,
-      temp: chaleur === null ? '' : ` · ${chaleur} °C`,
+      temp: chaleur === null ? '' : ` · ${Math.round(chaleur)} °C`,
       // La charge (moyenne sur 1 min) est rapportée aux cœurs : 100 % = tous pris, au-delà = des tâches attendent.
       charge: ` · ${t.charge} ${Math.round((m.charge / m.coeurs) * 100)} %`,
     }

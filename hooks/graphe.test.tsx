@@ -31,19 +31,19 @@ const ROUGE = '#d9534f'
 const DATE = 1_800_000_000
 const PERIODE_MS = 3000
 
-// 10 cœurs : un processus à `cpu × 10` donne `cpu` % de CPU moyen, une charge de `charge / 10` donne `charge` %.
+// 10 cœurs : iostat à `100 - cpu` % au repos donne `cpu` % de CPU, une charge de `charge / 10` donne `charge` %.
 // RAM : 39,7 Gio utilisés sur 64, soit 62 % (barre ▅, verte).
 const releve = (cpu: number, charge: number) => `68719476736
 10
 { ${charge / 10} 1.00 1.00 }
 total = 7168.00M  used = 5120.00M  free = 2048.00M  (encrypted)
 Mach Virtual Memory Statistics: (page size of 16384 bytes)
+Pages active:                                1900000.
 Pages wired down:                             300000.
 Pages purgeable:                              100000.
 Anonymous pages:                             2000000.
 Pages occupied by compressor:                 400000.
- %CPU
- ${cpu * 10}
+iostat: ${cpu} 0 ${100 - cpu}  ${charge / 10} 1.00 1.00
 `
 
 type Mesure = [cpu: number, charge: number, temperature?: number]
