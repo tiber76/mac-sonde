@@ -1,0 +1,16 @@
+{
+  "name": "mac-sonde",
+  "owner": {
+    "name": "Jeremy L"
+  },
+  "metadata": {
+    "description": "mac-sonde, a Claude Code mod that shows your Mac's load above the prompt"
+  },
+  "plugins": [
+    {
+      "name": "mac-sonde",
+      "source": "./",
+      "description": "Your Mac's CPU, GPU, RAM, temperature, load and swap, with colour sparklines, above the Claude Code prompt (macOS only)"
+    }
+  ]
+}

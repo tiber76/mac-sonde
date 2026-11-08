@@ -1,0 +1,24 @@
+{
+  "name": "mac-sonde",
+  "version": "1.0.0",
+  "description": "A line above the Claude Code prompt with your Mac's CPU, GPU, RAM, temperature, load and swap, each followed by a small colour sparkline (macOS only)",
+  "author": { "name": "Jeremy L" },
+  "license": "MIT",
+  "keywords": ["macos", "monitor", "cpu", "ram", "status"],
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language",
+      "description": "Language of the line and of the /mac command: en (English) or fr (français).",
+      "default": "en",
+      "options": ["en", "fr"]
+    },
+    "temperatureFile": {
+      "type": "string",
+      "title": "Temperature file",
+      "description": "Optional. Path of a file holding '<unix time in seconds> <degrees Celsius>' (for example '1762620000 58'), kept fresh by a tool of yours; ~/ is your home folder. Empty: no temperature is shown. See the README.",
+      "default": ""
+    }
+  }
+}
