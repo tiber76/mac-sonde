@@ -13,6 +13,7 @@ const bandeau = (bodyColumns = 80) =>
     surface: 'desktop',
     props: {
       hasSurvey: false,
+      isCollapsed: false,
       isWorking: false,
       maxRows: 10,
       bodyColumns,
@@ -337,7 +338,7 @@ test('a temperature file shows the temperature; ~/ is the home folder', { option
   demarrage(on, () => SORTIE, false, `${DATE} 58`)
   on('env.get', () => ({ value: '/Users/someone' }))
   await demarrer($)
-  expect(lus[0]).toBe('/Users/someone/sonde.txt')
+  expect(lus).toContain('/Users/someone/sonde.txt')
   expect(await ligneThisMac($)).toContain('RAM 39.7 GiB · 58 °C · load 34 %')
 })
 
@@ -362,10 +363,10 @@ test('after /mac, typing "s" suggests smooth and slow, each with a description',
   for (const s of r.suggestions) expect(s.description?.length).toBeGreaterThan(0)
 })
 
-test('after /mac, typing "f" suggests filled and fast', async ($, on) => {
+test('after /mac, typing "f" suggests filled only: the fast rate is gone', async ($, on) => {
   demarrage(on, () => SORTIE)
   await demarrer($)
-  expect(textes(await suggerer($, '/mac F'))).toEqual(['filled', 'fast'])
+  expect(textes(await suggerer($, '/mac F'))).toEqual(['filled'])
 })
 
 test('outside /mac, nothing is suggested', async ($, on) => {

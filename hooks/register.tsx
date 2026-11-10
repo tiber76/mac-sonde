@@ -11,8 +11,8 @@ const CLE_MASQUE = 'masque'
 const TEXTES = {
   en: {
     nom: 'This Mac',
-    description: 'Show or hide the Mac CPU, GPU, RAM and temperature line; smooth, filled, line, bars: sparkline style; slow, normal, fast: sampling rate',
-    indice: '[smooth|filled|line|bars|slow|normal|fast]',
+    description: 'Show or hide the Mac CPU, GPU, RAM and temperature line; smooth, filled, line, bars: sparkline style; slow, normal: sampling rate',
+    indice: '[smooth|filled|line|bars|slow|normal]',
     sansMesure: ': no reading · /mac to hide',
     masquee: 'This Mac line hidden. Type /mac to show it again.',
     affichee: 'This Mac line shown.',
@@ -21,7 +21,7 @@ const TEXTES = {
     inconnu: (mot: string) => `Unknown setting: "${mot}".`,
     aide:
       'Sparkline styles: /mac smooth (continuous curve), /mac filled (⣀⣤⣶⣿), /mac line (⣀⡠⠊), /mac bars (▁▃▅█). ' +
-      'Sampling rate: /mac slow (10 s), /mac normal (3 s), /mac fast (1 s). /mac alone hides or shows the line.',
+      'Sampling rate: /mac slow (10 s), /mac normal (3 s). /mac alone hides or shows the line.',
     noms: { cpu: 'CPU', charge: 'load', temp: 'temperature', ram: 'RAM' },
     // Les mots que /mac comprend, proposés pendant la frappe, chacun avec sa ligne d'explication.
     mots: [
@@ -31,7 +31,6 @@ const TEXTES = {
       ['bars', 'sparklines as bars ▁▃▅█'],
       ['slow', 'one reading every 10 s'],
       ['normal', 'one reading every 3 s'],
-      ['fast', 'one reading every second'],
     ],
     alt: (nom: string, n: number) => `${nom}: curve of the last ${n} readings`,
     charge: 'load',
@@ -41,8 +40,8 @@ const TEXTES = {
   fr: {
     nom: 'Ce Mac',
     description:
-      'Affiche ou masque la ligne CPU, GPU, RAM et température du Mac ; lisse, pleine, courbe, barres : style des graphes ; lent, normal, rapide : fréquence',
-    indice: '[lisse|pleine|courbe|barres|lent|normal|rapide]',
+      'Affiche ou masque la ligne CPU, GPU, RAM et température du Mac ; lisse, pleine, courbe, barres : style des graphes ; lent, normal : fréquence',
+    indice: '[lisse|pleine|courbe|barres|lent|normal]',
     sansMesure: ' : pas de mesure · /mac pour masquer',
     masquee: 'Ligne Ce Mac masquée. /mac pour la réafficher.',
     affichee: 'Ligne Ce Mac affichée.',
@@ -51,7 +50,7 @@ const TEXTES = {
     inconnu: (mot: string) => `Réglage inconnu : « ${mot} ».`,
     aide:
       'Styles des graphes : /mac lisse (courbe continue), /mac pleine (⣀⣤⣶⣿), /mac courbe (⣀⡠⠊), /mac barres (▁▃▅█). ' +
-      'Fréquence de relevé : /mac lent (10 s), /mac normal (3 s), /mac rapide (1 s). /mac seul masque ou affiche la ligne.',
+      'Fréquence de relevé : /mac lent (10 s), /mac normal (3 s). /mac seul masque ou affiche la ligne.',
     noms: { cpu: 'CPU', charge: 'charge', temp: 'température', ram: 'RAM' },
     mots: [
       ['lisse', 'graphes en courbe continue'],
@@ -60,7 +59,6 @@ const TEXTES = {
       ['barres', 'graphes en barres ▁▃▅█'],
       ['lent', 'un relevé toutes les 10 s'],
       ['normal', 'un relevé toutes les 3 s'],
-      ['rapide', 'un relevé chaque seconde'],
     ],
     alt: (nom: string, n: number) => `${nom} : courbe des ${n} derniers relevés`,
     charge: 'charge',
@@ -118,15 +116,34 @@ const versStyle = (mot: unknown): Style | null =>
   estStyle(mot) ? mot : (STYLES.find(s => STYLES_EN[s] === mot) ?? null)
 const parCaractere = (style: Style) => (style === 'barres' ? 1 : 2)
 
-// Trois fréquences de relevé, choisies à l'installation (option `frequence`) puis avec `/mac lent|normal|rapide`.
-// Plus vite qu'une seconde, le relevé (cinq commandes système) pèserait sur le CPU qu'il mesure.
-const FREQUENCES = { lent: 10_000, normal: 3000, rapide: 1000 } as const
+// Deux fréquences de relevé, choisies à l'installation (option `sampling`) puis avec `/mac lent|normal`. Lente par
+// défaut : chaque session ouverte redessine sa ligne à chaque relevé, et l'app le paie d'autant plus que les sessions
+// sont nombreuses. L'ancienne fréquence rapide (1 s), retenue ou réglée, se replie sur le défaut.
+const FREQUENCES = { lent: 10_000, normal: 3000 } as const
 type Frequence = keyof typeof FREQUENCES
 const CLE_FREQUENCE = 'frequence'
 const estFrequence = (v: unknown): v is Frequence => typeof v === 'string' && Object.hasOwn(FREQUENCES, v)
-const FREQUENCES_EN: Record<Frequence, string> = { lent: 'slow', normal: 'normal', rapide: 'fast' }
+const FREQUENCES_EN: Record<Frequence, string> = { lent: 'slow', normal: 'normal' }
 const versFrequence = (mot: unknown): Frequence | null =>
   estFrequence(mot) ? mot : ((Object.keys(FREQUENCES) as Frequence[]).find(f => FREQUENCES_EN[f] === mot) ?? null)
+
+// Une mesure pour toutes les sessions : la première qui trouve la mesure rangée périmée annonce son relevé, relève le
+// Mac et range sa mesure dans ce fichier (sous le dossier personnel) ; les autres la reprennent sans rien relever.
+// Périmée passé 80 % de la période de la session ; un relevé annoncé (iostat prend une seconde) est attendu 3 s.
+const PARTAGE = 'Library/Caches/mac-sonde/releve.json'
+const FRAICHEUR = 0.8
+const RELEVE_ANNONCE_MS = 3000
+type Partage = { mesureA: number; sortie: string | null; enCoursDepuis?: number }
+
+function lirePartage(texte: string | null): Partage | null {
+  try {
+    const v = JSON.parse(texte ?? '')
+    const lisible = typeof v?.mesureA === 'number' && (typeof v.sortie === 'string' || v.sortie === null)
+    return lisible ? v : null
+  } catch {
+    return null
+  }
+}
 
 // Une courbe lisse : sa case fait la largeur d'un caractère à chasse fixe, en pixels CSS ; ses couleurs sont écrites
 // en clair, une image ne lisant pas les couleurs du thème.
@@ -260,19 +277,54 @@ export const register: Register = (on, options) => {
   const enFrancais = options.language === 'fr'
   // Le style et la fréquence choisis à l'installation (options `sparkline` et `sampling`).
   const styleInstalle: Style = versStyle(options.sparkline) ?? 'lisse'
-  const frequenceInstallee: Frequence = versFrequence(options.sampling) ?? 'normal'
+  const frequenceInstallee: Frequence = versFrequence(options.sampling) ?? 'lent'
   // La température est facultative : sans fichier réglé (option `temperatureFile`), elle n'est jamais lue.
   const fichierTemperature = typeof options.temperatureFile === 'string' ? options.temperatureFile.trim() : ''
-  // Relance le relevé à une autre fréquence : posé au démarrage de la session, appelé par /mac lent|normal|rapide.
+  // Relance le relevé à une autre fréquence : posé au démarrage de la session, appelé par /mac lent|normal.
   let cadencer: (frequence: Frequence) => void = () => {}
 
   on('session.start', async ($, e, next) => {
     await $.command.register({ name: 'mac', description: t.description, argumentHint: t.indice })
-    const chemin = fichierTemperature.startsWith('~/')
-      ? `${(await $.env.get('HOME')) ?? ''}${fichierTemperature.slice(1)}`
-      : fichierTemperature
-    const relever = async () => {
+    const maison = await (async () => {
+      try {
+        return (await $.env.get('HOME')) ?? null
+      } catch {
+        return null
+      }
+    })()
+    const chemin = fichierTemperature.startsWith('~/') ? `${maison ?? ''}${fichierTemperature.slice(1)}` : fichierTemperature
+    // Sans dossier personnel connu, pas de mesure partagée : la session relève le Mac à chaque fois, comme avant.
+    const fichierPartage = maison ? `${maison}/${PARTAGE}` : null
+    const ranger = async (partage: Partage) => {
+      if (!fichierPartage) return
+      try {
+        await $.fs.write(fichierPartage, JSON.stringify(partage))
+      } catch {
+        // Rangement impossible : les autres sessions relèveront elles-mêmes.
+      }
+    }
+    let periode: number = FREQUENCES[frequenceInstallee]
+    // La mesure rangée si elle est fraîche ; sinon celle que la session relève, ou rien si une autre relève déjà.
+    const mesurer = async (): Promise<{ a: number; sortie: string | null } | null> => {
+      const maintenant = await $.clock.now()
+      const partage = fichierPartage ? lirePartage(await $.fs.read(fichierPartage).catch(() => null)) : null
+      // Une date à venir (l'horloge du Mac a reculé) ne compte pas : la session relève et range une date juste.
+      const depuis = (date: number) => maintenant - date
+      const recent = (date: number | undefined, delai: number) => date !== undefined && depuis(date) >= 0 && depuis(date) < delai
+      if (partage && recent(partage.mesureA, periode * FRAICHEUR)) return { a: partage.mesureA, sortie: partage.sortie }
+      if (recent(partage?.enCoursDepuis, RELEVE_ANNONCE_MS)) return null
+      await ranger({ mesureA: partage?.mesureA ?? 0, sortie: partage?.sortie ?? null, enCoursDepuis: maintenant })
       const { stdout } = await $.process.run(RELEVE).catch(() => ({ stdout: null }))
+      await ranger({ mesureA: maintenant, sortie: stdout })
+      return { a: maintenant, sortie: stdout }
+    }
+    // L'heure de la dernière mesure montrée : sans mesure nouvelle, rien n'est écrit, donc rien n'est redessiné.
+    let montree: number | null = null
+    const relever = async () => {
+      const mesure = await mesurer()
+      if (!mesure || mesure.a === montree) return
+      montree = mesure.a
+      const stdout = mesure.sortie
       const ligne = chemin ? await $.fs.read(chemin).catch(() => null) : null
       const lueA = await $.clock.now()
       const m = analyser(stdout)
@@ -304,7 +356,8 @@ export const register: Register = (on, options) => {
     let minuterie: Timer | null = null
     cadencer = frequence => {
       minuterie?.cancel()
-      minuterie = $.clock.every(FREQUENCES[frequence], () => void relever())
+      periode = FREQUENCES[frequence]
+      minuterie = $.clock.every(periode, () => void relever())
     }
     const frequenceRetenue = await $.store.get(CLE_FREQUENCE).catch(() => null)
     cadencer(versFrequence(frequenceRetenue) ?? frequenceInstallee)

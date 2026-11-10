@@ -1,6 +1,6 @@
 # mac-sonde
 
-A small line above the Claude Code prompt that shows how hard your Mac is working, refreshed every 3 seconds by default:
+A small line above the Claude Code prompt that shows how hard your Mac is working, refreshed every 10 seconds by default:
 
 ![The mac-sonde line in its four sparkline styles: smooth, filled, line and bars, coloured green, orange and red](docs/styles.svg)
 
@@ -13,7 +13,7 @@ A small line above the Claude Code prompt that shows how hard your Mac is workin
 - `/mac` hides the line, and shows it again. The choice is remembered across sessions.
 - After `/mac `, start a word and the prompt box suggests the ones it understands (`/mac s` → `smooth`, `slow`), each with a short description.
 
-**macOS only.** It reads the system with `sysctl`, `vm_stat`, `ioreg` and `iostat`, which ship with macOS; nothing to install, no administrator rights, nothing sent anywhere. On another system the line shows "no reading".
+**macOS only.** It reads the system with `sysctl`, `vm_stat`, `ioreg` and `iostat`, which ship with macOS; nothing to install, no administrator rights, nothing sent anywhere. All open sessions share one reading, kept in `~/Library/Caches/mac-sonde/releve.json` (see [Many sessions](#many-sessions)). On another system the line shows "no reading".
 
 > Claude Code mods are in early access: the API may change and break this mod until it is updated.
 
@@ -43,12 +43,12 @@ Why these choices, and what changed from 1.3.0:
 
 | Style | Looks like | History shown |
 | --- | --- | --- |
-| `smooth` (default) | a real continuous curve, area filled, its colour sliding from one reading to the next; drawn as a small image | 20 readings, 1 min |
-| `filled` | `⣀⣤⣶⣿`: the curve in braille dots, area filled, two readings per character, 4 heights | 20 readings, 1 min |
-| `line` | `⣀⡠⠊`: the line alone, in braille dots | 20 readings, 1 min |
-| `bars` | `▁▃▅█`: one reading per character, 8 heights | 10 readings, 30 s |
+| `smooth` (default) | a real continuous curve, area filled, its colour sliding from one reading to the next; drawn as a small image | 20 readings, 3 min 20 s |
+| `filled` | `⣀⣤⣶⣿`: the curve in braille dots, area filled, two readings per character, 4 heights | 20 readings, 3 min 20 s |
+| `line` | `⣀⡠⠊`: the line alone, in braille dots | 20 readings, 3 min 20 s |
+| `bars` | `▁▃▅█`: one reading per character, 8 heights | 10 readings, 1 min 40 s |
 
-`smooth` is an image, which a terminal cannot draw: in a terminal session the line falls back to `filled`. The durations are at the normal sampling rate.
+`smooth` is an image, which a terminal cannot draw: in a terminal session the line falls back to `filled`. The durations are at the default slow sampling rate (1 min and 30 s at the normal rate).
 
 Pick one when you install the mod (the **Sparkline style** setting), and switch at any time:
 
@@ -65,11 +65,18 @@ The style you pick with `/mac` is remembered across sessions and wins over the i
 
 | Rate | One reading every |
 | --- | --- |
-| `slow` | 10 s |
-| `normal` (default) | 3 s |
-| `fast` | 1 s |
+| `slow` (default) | 10 s |
+| `normal` | 3 s |
 
-Pick one when you install the mod (the **Sampling rate** setting), or switch with `/mac slow`, `/mac normal` or `/mac fast`; the choice is remembered and wins over the install setting (`lent`, `normal`, `rapide` work too). There is no faster rate on purpose: each reading runs five system commands and watches the CPU for one second, so a faster rate would weigh on the very CPU it measures.
+Pick one when you install the mod (the **Sampling rate** setting), or switch with `/mac slow` or `/mac normal`; the choice is remembered and wins over the install setting (`lent` and `normal` work too). There is no faster rate on purpose: each reading runs five system commands and watches the CPU for one second, and every open session redraws its line at each new reading. The `fast` rate (one reading per second) was removed in 1.5.0; a `fast` setting kept from an earlier version falls back to `slow`.
+
+## Many sessions
+
+The line costs little in one session, but every open session draws its own. Since 1.5.0, with many sessions open:
+
+- **One reading for all sessions.** The first session that finds the shared reading out of date announces it is taking one, reads the Mac and stores the result in `~/Library/Caches/mac-sonde/releve.json`; the other sessions reuse it instead of reading the Mac themselves. Ten open sessions cost one reading every 10 s, not ten. A reading announced more than 3 s ago is taken as abandoned.
+- **No redraw without a new reading.** A session redraws its line only when a new reading came in.
+- If that file cannot be read or written, each session reads the Mac itself, as before 1.5.0.
 
 ## Narrow windows
 
@@ -103,7 +110,7 @@ Run `/config` and look for the mac-sonde rows:
 | --- | --- | --- |
 | Language | `en` (English) or `fr` (français) | `en` |
 | Sparkline style | `smooth`, `filled`, `line` or `bars` | `smooth` |
-| Sampling rate | `slow`, `normal` or `fast` | `normal` |
+| Sampling rate | `slow` or `normal` | `slow` |
 | Temperature file | path to a file, `~/` allowed | empty: no temperature |
 
 ## Temperature (optional)

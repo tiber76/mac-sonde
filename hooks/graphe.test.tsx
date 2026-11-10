@@ -15,6 +15,7 @@ const bandeau = (bodyColumns: number, surface: 'desktop' | 'terminal' = 'desktop
     surface,
     props: {
       hasSurvey: false,
+      isCollapsed: false,
       isWorking: false,
       maxRows: 10,
       bodyColumns,
@@ -29,7 +30,8 @@ const ORANGE = '#d9922e'
 const ROUGE = '#d9534f'
 
 const DATE = 1_800_000_000
-const PERIODE_MS = 3000
+// La fréquence par défaut : lente, un relevé toutes les 10 s.
+const PERIODE_MS = 10_000
 
 // 10 cœurs : iostat à `100 - cpu` % au repos donne `cpu` % de CPU, une charge de `charge / 10` donne `charge` %.
 // RAM : 39,7 Gio utilisés sur 64, soit 62 % (barre ▅, verte).
@@ -48,7 +50,7 @@ iostat: ${cpu} 0 ${100 - cpu}  ${charge / 10} 1.00 1.00
 
 type Mesure = [cpu: number, charge: number, temperature?: number]
 
-// Chaque relevé (le premier au démarrage, puis un toutes les 3 s) rend la mesure suivante ;
+// Chaque relevé (le premier au démarrage, puis un toutes les 10 s) rend la mesure suivante ;
 // sans température donnée, le fichier du relais est absent. `retenu` : ce que le stockage du mod garde d'avant.
 async function apres($: any, on: any, mesures: Mesure[], retenu: Record<string, unknown> = {}) {
   let i = 0
@@ -315,51 +317,66 @@ test('/mac lisse revient au style lisse', BARRES, async ($, on) => {
   expect(svgs((await dessin($, 200)).arbre)).toHaveLength(3)
 })
 
-// Fréquence de relevé : lent (10 s), normal (3 s, le défaut) ou rapide (1 s), à l'installation (option `sampling`)
-// ou avec `/mac lent|normal|rapide`, retenue comme le style.
+// Fréquence de relevé : lent (10 s, le défaut) ou normal (3 s), à l'installation (option `sampling`) ou avec
+// `/mac lent|normal`, retenue comme le style. L'ancienne fréquence rapide (1 s) n'existe plus.
 async function pointsCpu($: any) {
   return ((await ligne($, 300)).match(/CPU \d+ % ([▁-█]*)/)?.[1] ?? '').length
 }
 
-test('fréquence normale par défaut : un relevé toutes les 3 s', BARRES, async ($, on) => {
+test('fréquence lente par défaut : un relevé toutes les 10 s', BARRES, async ($, on) => {
   const horloge = await apres($, on, [[0, 0]])
-  await horloge.advance(9000)
-  expect(await pointsCpu($)).toBe(4)
-})
-
-test('fréquence rapide à l’installation : un relevé chaque seconde', { options: { ...FR, sparkline: 'bars', sampling: 'fast' } }, async ($, on) => {
-  const horloge = await apres($, on, [[0, 0]])
-  await horloge.advance(3000)
-  expect(await pointsCpu($)).toBe(4)
-})
-
-test('/mac lent : un relevé toutes les 10 s, retenu pour la suite', BARRES, async ($, on) => {
-  const horloge = await apres($, on, [[0, 0]])
-  const { text } = await lancerMac($, 'Lent')
-  expect(text).toContain('lent')
   await horloge.advance(20_000)
   expect(await pointsCpu($)).toBe(3)
 })
 
-test('/mac rapide puis normal : la fréquence change à chaque fois, sans doubler les relevés', BARRES, async ($, on) => {
+test('/mac normal : un relevé toutes les 3 s, retenu pour la suite', BARRES, async ($, on) => {
   const horloge = await apres($, on, [[0, 0]])
-  await lancerMac($, 'rapide')
-  await horloge.advance(2000)
-  await lancerMac($, 'normal')
-  await horloge.advance(3000)
+  const { text } = await lancerMac($, 'Normal')
+  expect(text).toContain('normal')
+  await horloge.advance(9000)
   expect(await pointsCpu($)).toBe(4)
+})
+
+test('/mac normal puis lent : la fréquence change à chaque fois, sans doubler les relevés', BARRES, async ($, on) => {
+  const horloge = await apres($, on, [[0, 0]])
+  await lancerMac($, 'normal')
+  await horloge.advance(6000)
+  await lancerMac($, 'lent')
+  await horloge.advance(10_000)
+  expect(await pointsCpu($)).toBe(4)
+})
+
+test('/mac rapide n’existe plus : réglage inconnu, la fréquence reste lente', BARRES, async ($, on) => {
+  const horloge = await apres($, on, [[0, 0]])
+  const { text } = await lancerMac($, 'rapide')
+  expect(text).toContain('Réglage inconnu : « rapide »')
+  await horloge.advance(20_000)
+  expect(await pointsCpu($)).toBe(3)
 })
 
 test('une fréquence retenue dans une autre session vaut au démarrage', BARRES, async ($, on) => {
-  const horloge = await apres($, on, [[0, 0]], { frequence: 'rapide' })
-  await horloge.advance(3000)
+  const horloge = await apres($, on, [[0, 0]], { frequence: 'normal' })
+  await horloge.advance(9000)
   expect(await pointsCpu($)).toBe(4)
 })
 
-test('/mac avec un mot inconnu : l’aide liste aussi les fréquences', BARRES, async ($, on) => {
+test('« rapide » retenu par une version précédente : repli sur la fréquence lente', BARRES, async ($, on) => {
+  const horloge = await apres($, on, [[0, 0]], { frequence: 'rapide' })
+  await horloge.advance(20_000)
+  expect(await pointsCpu($)).toBe(3)
+})
+
+test('option sampling: fast d’une version précédente : repli sur la fréquence lente', { options: { ...FR, sparkline: 'bars', sampling: 'fast' } }, async ($, on) => {
+  const horloge = await apres($, on, [[0, 0]])
+  await horloge.advance(20_000)
+  expect(await pointsCpu($)).toBe(3)
+})
+
+test('/mac avec un mot inconnu : l’aide liste aussi les fréquences, sans la rapide', BARRES, async ($, on) => {
   await apres($, on, QUATRE)
   const { text } = await lancerMac($, '30ms')
-  for (const mot of ['lisse', 'lent', 'normal', 'rapide']) expect(text).toContain(mot)
+  for (const mot of ['lisse', 'lent', 'normal']) expect(text).toContain(mot)
+  expect(text).not.toContain('rapide')
 })
 
 // En anglais (réglages par défaut) : noms anglais des styles et des fréquences, réponses en anglais ; les noms français
@@ -409,23 +426,29 @@ test('/mac also takes the French style names', async ($, on) => {
   expect(await ligneEn($, 200)).toContain(' · CPU 100 % ⣰⣿ · ')
 })
 
-test('install option sampling: slow takes a reading every 10 s', { options: { sparkline: 'bars', sampling: 'slow' } }, async ($, on) => {
+test('install option sampling: normal takes a reading every 3 s', { options: { sparkline: 'bars', sampling: 'normal' } }, async ($, on) => {
   const horloge = await apres($, on, [[0, 0]])
-  await horloge.advance(20_000)
-  expect(((await ligneEn($, 300)).match(/CPU \d+ % ([▁-█]*)/)?.[1] ?? '').length).toBe(3)
+  await horloge.advance(9000)
+  expect(((await ligneEn($, 300)).match(/CPU \d+ % ([▁-█]*)/)?.[1] ?? '').length).toBe(4)
 })
 
-test('/mac fast answers in English', async ($, on) => {
+test('/mac slow answers in English', async ($, on) => {
   await apres($, on, QUATRE)
-  expect((await lancerMac($, 'fast')).text).toBe('Sampling fast: one reading every 1 s.')
+  expect((await lancerMac($, 'slow')).text).toBe('Sampling slow: one reading every 10 s.')
+})
+
+test('/mac fast no longer exists: unknown setting', async ($, on) => {
+  await apres($, on, QUATRE)
+  expect((await lancerMac($, 'fast')).text).toContain('Unknown setting: "fast".')
 })
 
 test('/mac with an unknown word: nothing changes, the help lists the English styles and rates', { options: { sparkline: 'bars' } }, async ($, on) => {
   await apres($, on, QUATRE)
   const { text } = await lancerMac($, 'rainbow')
   expect(text).toContain('Unknown setting: "rainbow".')
-  for (const mot of ['/mac smooth', '/mac filled', '/mac line', '/mac bars', '/mac slow', '/mac normal', '/mac fast']) {
+  for (const mot of ['/mac smooth', '/mac filled', '/mac line', '/mac bars', '/mac slow', '/mac normal']) {
     expect(text).toContain(mot)
   }
+  expect(text).not.toContain('/mac fast')
   expect(await ligneEn($, 200)).toContain(' · CPU 100 % ▁▅██ · ')
 })
